@@ -1,7 +1,7 @@
 CREATE TABLE LKP_PROGRAMMI (
-    ID_PROGRAMMA                            VARCHAR2(100 CHAR) DEFAULT UUID(),
+    ID_PROGRAMMA                            VARCHAR(100) DEFAULT (UUID()),
     VALORE_SEQUENZA_TEMPORALE_PROGRAMMA     INTEGER,
-    NOME_PROGRAMMA                          VARCHAR2(500 CHAR),
+    NOME_PROGRAMMA                          VARCHAR(500),
     ORARIO_INIZIO_PROGRAMMA                 TIME,
     ORARIO_FINE_PROGRAMMA                   TIME,
 
@@ -10,8 +10,8 @@ CREATE TABLE LKP_PROGRAMMI (
 
 
 CREATE TABLE LKP_PIANTE_PROGRAMMI (
-    ID_PIANTA                               VARCHAR2(100 CHAR),
-    ID_PROGRAMMA                            VARCHAR2(100 CHAR),
+    ID_PIANTA                               VARCHAR(100),
+    ID_PROGRAMMA                            VARCHAR(100),
 
     CONSTRAINT PK_LKP_PIANTE_PROGRAMMI PRIMARY KEY (ID_PIANTA, ID_PROGRAMMA),
     CONSTRAINT FK_LKP_PIANTE_PROGRAMMI_PIANTA FOREIGN KEY (ID_PIANTA) REFERENCES ACT_ANAGRAFICA_PIANTE_TESTATA(ID_PIANTA),
@@ -20,9 +20,9 @@ CREATE TABLE LKP_PIANTE_PROGRAMMI (
 
 
 CREATE TABLE LKP_STATI_PIANTE (
-    ID_STATO                                VARCHAR2(500 CHAR),
-    NOME_STATO                              VARCHAR2(500 CHAR),
-    DESCRIZIONE_STATO                       CLOB,
+    ID_STATO                                VARCHAR(500),
+    NOME_STATO                              VARCHAR(500),
+    DESCRIZIONE_STATO                       TEXT,
 
     CONSTRAINT PK_LKP_STATI PRIMARY KEY (ID_STATO),
     CONSTRAINT CK_LKP_STATI CHECK (ID_STATO IN ('TROPPO_SECCO','SECCO','UMIDO','BAGNATO','TROPPO_BAGNATO'))
@@ -30,8 +30,8 @@ CREATE TABLE LKP_STATI_PIANTE (
 
 
 CREATE TABLE LKP_STANZE (
-    ID_STANZA                               VARCHAR2(100 CHAR) DEFAULT UUID(),
-    NOME_STANZA                             VARCHAR2(500 CHAR),
+    ID_STANZA                               VARCHAR(100) DEFAULT (UUID()),
+    NOME_STANZA                             VARCHAR(500),
     DIMENSIONE_GRIGLIA_X                    INTEGER,
     DIMENSIONE_GRIGLIA_Y                    INTEGER,
 
