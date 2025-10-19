@@ -1,0 +1,1 @@
+Each file related to the DB structure: scripts and datamodel.
