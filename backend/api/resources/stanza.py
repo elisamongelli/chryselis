@@ -41,3 +41,15 @@ class LookupStanzeResource(Resource):
         db.session.commit()
         
         return one_stanza_schema.dump(nuova_stanza), 201
+    
+
+    def delete(self, id):
+
+        stanza = LookupStanzeModel.query.get(id)
+
+        if stanza:
+            db.session.delete(stanza)
+            db.session.commit()
+            return {"message": "Stanza eliminata"}, 204
+
+        return {"message": "Stanza non trovata"}, 404
