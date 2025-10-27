@@ -53,7 +53,6 @@ class LookupStanzeResource(Resource):
             DIMENSIONE_GRIGLIA_Y=data['DIMENSIONE_GRIGLIA_Y']
         )
 
-
         try:
             db.session.add(nuova_stanza)
             db.session.commit()
@@ -78,14 +77,15 @@ class LookupStanzeResource(Resource):
         # silent=True does not throw any exception if request body is empty (or not in a JSON format)
         data = request.get_json(silent=True) or {}
 
-
         try:
             # load method returnes a dictionary with all valid fields
             # if a field has a wrong data type or does not exist on DB table, it throws a ValidationError
+            # partial=True allows to get a JSON request with only a subset of fields
             valid_data = one_stanza_schema.load(data, partial=True)
         except ValidationError:
             return {"message": "I valori inseriti per la modifica della stanza non sono validi"}, 400
         
+        # sets the allowed fields and updates only them on DB
         allowed_fields = ['NOME_STANZA', 'DIMENSIONE_GRIGLIA_X', 'DIMENSIONE_GRIGLIA_Y']
         for key, value in valid_data.items():
             if key in allowed_fields:
@@ -100,13 +100,17 @@ class LookupStanzeResource(Resource):
         return one_stanza_schema.dump(stanza), 200
     
 
+
     def delete(self, id):
 
+        # get the one room from the DB with the corresponding ID
         stanza = LookupStanzeModel.query.get(id)
 
+        # if the ID is not found in the DB, return 404 error, room not found
         if not stanza:
             return {"message": "Stanza non trovata"}, 404
 
+        # else delete the room from the DB
         try:
             db.session.delete(stanza)
             db.session.commit()
