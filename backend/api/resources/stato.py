@@ -18,11 +18,34 @@ class LookupStatiResource(Resource):
 
     def get(self, id=None):
 
+        offset = request.args.get('offset', default=0, type=int)
+        limit = request.args.get('limit', default=20, type=int)
+
+        if offset < 0:
+            return {"message": "L'offset deve essere positivo"}, 400
+        if limit < 1 or limit > 100:
+            return {"message": "Il limite deve essere compreso tra 1 e 100"}, 400
+
+        print("Offset:", offset, "\nLimit:", limit)
+
+        query = LookupStatiModel.query.order_by(LookupStatiModel.ID_STATO)
+
         # if ID does not exists, get all statuses
         if id is None:
             try:
-                stati = LookupStatiModel.query.all()
-                return many_stati_schema.dump(stati), 200
+                pagination = query.paginate(page=offset, per_page=limit, error_out=False)
+                items = pagination.items
+                total = pagination.total
+                pages = pagination.pages
+                # stati = LookupStatiModel.query.all()
+                return {
+                    "stati": many_stati_schema.dump(items),
+                    "offset": offset,
+                    "limit": limit,
+                    "total": total,
+                    "pages": pages,
+                    "count": len(items)
+                }, 200
             except SQLAlchemyError:
                 return {"message": "Errore durante il recupero degli stati"}, 500
         

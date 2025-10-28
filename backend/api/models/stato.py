@@ -7,9 +7,9 @@ class LookupStatiModel(db.Model):
 
     # specify the DB table name
     __tablename__ = 'lkp_stati_piante'
-    __table_args__ = (
+    """ __table_args__ = (
         CheckConstraint("ID_STATO IN ('TROPPO_SECCO','SECCO','UMIDO','BAGNATO','TROPPO_BAGNATO')"),
-    )
+    ) """
 
     # lists all DB table columns
     ID_STATO = db.Column(db.String(500), primary_key=True)
