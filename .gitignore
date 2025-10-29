@@ -1,0 +1,10 @@
+# ignore DB configuration python file
+backend/config.py
+
+# ignore temp python files
+__pycache__/
+
+# ignore virtual environment folders
+venv/
+env/
+.env/
