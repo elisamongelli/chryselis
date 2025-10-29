@@ -18,27 +18,28 @@ class LookupStatiResource(Resource):
 
     def get(self, id=None):
 
-        page = request.args.get('page', default=1, type=int)
-        limit = request.args.get('limit', default=25, type=int)
-
-        if page < 1:
-            return {"message": "La pagina deve essere un valore positivo"}, 400
-        if limit < 1 or limit > 100:
-            return {"message": "Il limite deve essere compreso o uguale tra 1 e 100"}, 400
-
-        query = LookupStatiModel.query.order_by(LookupStatiModel.ID_STATO)
-
         # if ID does not exists, get all statuses
         if id is None:
             try:
+
+                page = request.args.get('page', default=1, type=int)
+                limit = request.args.get('limit', default=25, type=int)
+
+                if page < 1:
+                    return {"message": "La pagina deve essere un valore positivo"}, 400
+                if limit < 1 or limit > 100:
+                    return {"message": "Il limite deve essere compreso o uguale tra 1 e 100"}, 400
+
+                query = LookupStatiModel.query.order_by(LookupStatiModel.ID_STATO)
+                
                 pagination = query.paginate(page=page, per_page=limit, error_out=False)
-                items = pagination.items
+                stati = pagination.items
                 totalItems = pagination.total
                 totalPages = pagination.pages
                 hasMore = pagination.has_next
                 return {
-                    "stati": many_stati_schema.dump(items),
-                    "count": len(items),
+                    "stati": many_stati_schema.dump(stati),
+                    "count": len(stati),
                     "hasMore": hasMore,
                     "page": page,
                     "limit": limit,

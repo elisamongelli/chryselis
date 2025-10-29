@@ -21,8 +21,31 @@ class LookupStanzeResource(Resource):
         # if ID does not exists, get all rooms
         if id is None:
             try:
-                stanze = LookupStanzeModel.query.all()
-                return many_stanze_schema.dump(stanze), 200
+
+                page = request.args.get('page', default=1, type=int)
+                limit = request.args.get('limit', default=25, type=int)
+
+                if page < 1:
+                    return {"message": "La pagina deve essere un valore positivo"}, 400
+                if limit < 1 or limit > 100:
+                    return {"message": "Il limite deve essere compreso o uguale tra 1 e 100"}, 400
+                
+                query = LookupStanzeModel.query.order_by(LookupStanzeModel.NOME_STANZA)
+
+                pagination = query.paginate(page=page, per_page=limit, error_out=False)
+                stanze = pagination.items
+                totalItems = pagination.total
+                totalPages = pagination.pages
+                hasMore = pagination.has_next
+                return {
+                    "stanze": many_stanze_schema.dump(stanze),
+                    "count": len(stanze),
+                    "hasMore": hasMore,
+                    "page": page,
+                    "limit": limit,
+                    "totalPages": totalPages,
+                    "totalItems": totalItems
+                }, 200
             except SQLAlchemyError:
                 return {"message": "Errore durante il recupero delle stanze"}, 500
         
