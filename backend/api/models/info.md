@@ -2,3 +2,4 @@
 -__init__.py: extensions initialization, like SQLAlchemy()
 -stanza.py: defines the DB structure (columns and data types) for the room entity
 -stato.py: defines the DB structure (columns and data types) for the status entity
+-programma.py: defines the DB structure (columns and data types) for the schedule entity
