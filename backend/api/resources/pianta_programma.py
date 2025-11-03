@@ -134,17 +134,17 @@ class LookupPianteProgrammiResource(Resource):
     def delete(self, idPianta, idProgramma):
 
         # get the one plants-schedules association from the DB with the corresponding ID
-        programma = LookupPianteProgrammiModel.query.get(id)
+        piantaProgramma = LookupPianteProgrammiModel.query.filter(LookupPianteProgrammiModel.ID_PIANTA == idPianta and LookupPianteProgrammiModel.ID_PROGRAMMA == idProgramma).first()
 
         # if the ID is not found in the DB, return 404 error, plants-schedules association not found
-        if not programma:
-            return {"message": "Programma non trovato"}, 404
+        if not piantaProgramma:
+            return {"message": "Associazione tra le piante e i programmi non trovata"}, 404
 
         # else delete the plants-schedules association from the DB
         try:
-            db.session.delete(programma)
+            db.session.delete(piantaProgramma)
             db.session.commit()
-            return {"message": "Programma eliminato"}, 204
+            return {"message": "Associazione tra le piante e i programmi eliminata"}, 204
         except SQLAlchemyError:
             db.session.rollback()
-            return {"message": "Errore durante la cancellazione del programma"}, 500
+            return {"message": "Errore durante la cancellazione dell'associazione tra le piante e i programmi"}, 500
