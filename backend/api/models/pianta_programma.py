@@ -12,8 +12,8 @@ class LookupPianteProgrammiModel(db.Model):
     )
 
     # lists all DB table columns
-    ID_PIANTA = db.Column(db.String(100))
-    ID_PROGRAMMA = db.Column(db.String(100))
+    ID_PIANTA = db.Column(db.String(100), db.ForeignKey('act_anagrafica_piante_testata.ID_PIANTA'))
+    ID_PROGRAMMA = db.Column(db.String(100), db.ForeignKey('lkp_programmi.ID_PROGRAMMA'))
 
 
     # class constructor
