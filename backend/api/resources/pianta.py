@@ -95,30 +95,41 @@ class ActPianteResource(Resource):
         # get JSON for REST API request body
         data = request.get_json()
 
+        print(data)
+
         # create a new plant with request body's data
         nuova_pianta_testata = ActPianteTestataModel(
             ID_STATO_PIANTA=data['ID_STATO_PIANTA'],
             ID_ULTIMO_PROGRAMMA_ESEGUITO=data['ID_ULTIMO_PROGRAMMA_ESEGUITO'],
         )
+        
+        print(nuova_pianta_testata)
 
         nuova_pianta_dettaglio = ActPianteDettaglioModel(
+            ID_PIANTA=nuova_pianta_testata.ID_PIANTA,
             NOME_PIANTA=data['NOME_PIANTA'],
             DESCRIZIONE_PIANTA=data['DESCRIZIONE_PIANTA'],
-            FOTO_PIANTA=data['FOTO_PIANTA'],
+            FOTO_PIANTA=one_piante_schema.decode_photo(data['FOTO_PIANTA']),
             ID_STANZA=data['ID_STANZA'],
             POSIZIONE_STANZA_X=data['POSIZIONE_STANZA_X'],
             POSIZIONE_STANZA_Y=data['POSIZIONE_STANZA_Y']
         )
 
+        print(nuova_pianta_dettaglio)
+
         try:
             db.session.add(nuova_pianta_testata)
             db.session.add(nuova_pianta_dettaglio)
             db.session.commit()
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
             db.session.rollback()
-            return {"message": "Errore durante la creazione della pianta"}, 500
+            return {"message": "Errore durante la creazione della pianta" + str(e)}, 500
+        
+        pianta_completa = ActPianteTestataModel.query\
+                            .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
+                            .filter(ActPianteTestataModel.ID_PIANTA == nuova_pianta_testata.ID_PIANTA).first()
 
-        return one_piante_schema.dump(nuova_pianta_testata+nuova_pianta_dettaglio), 201
+        return one_piante_schema.dump(pianta_completa), 201
 
 
 
