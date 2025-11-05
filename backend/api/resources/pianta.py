@@ -98,15 +98,15 @@ class ActPianteResource(Resource):
         print(data)
 
         # create a new plant with request body's data
-        nuova_pianta_testata = ActPianteTestataModel(
+        nuova_pianta = ActPianteTestataModel(
             ID_STATO_PIANTA=data['ID_STATO_PIANTA'],
             ID_ULTIMO_PROGRAMMA_ESEGUITO=data['ID_ULTIMO_PROGRAMMA_ESEGUITO'],
         )
         
-        print(nuova_pianta_testata)
+        print(nuova_pianta)
 
-        nuova_pianta_dettaglio = ActPianteDettaglioModel(
-            ID_PIANTA=nuova_pianta_testata.ID_PIANTA,
+        nuova_pianta.dettaglio = ActPianteDettaglioModel(
+            ID_PIANTA=nuova_pianta.ID_PIANTA,
             NOME_PIANTA=data['NOME_PIANTA'],
             DESCRIZIONE_PIANTA=data['DESCRIZIONE_PIANTA'],
             FOTO_PIANTA=one_piante_schema.decode_photo(data['FOTO_PIANTA']),
@@ -115,11 +115,11 @@ class ActPianteResource(Resource):
             POSIZIONE_STANZA_Y=data['POSIZIONE_STANZA_Y']
         )
 
-        print(nuova_pianta_dettaglio)
+        print(nuova_pianta.dettaglio)
 
         try:
-            db.session.add(nuova_pianta_testata)
-            db.session.add(nuova_pianta_dettaglio)
+            db.session.add(nuova_pianta)
+            # db.session.add(nuova_pianta.dettaglio)
             db.session.commit()
         except SQLAlchemyError as e:
             db.session.rollback()
@@ -127,7 +127,7 @@ class ActPianteResource(Resource):
         
         pianta_completa = ActPianteTestataModel.query\
                             .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                            .filter(ActPianteTestataModel.ID_PIANTA == nuova_pianta_testata.ID_PIANTA).first()
+                            .filter(ActPianteTestataModel.ID_PIANTA == nuova_pianta.ID_PIANTA).first()
 
         return one_piante_schema.dump(pianta_completa), 201
 

@@ -27,6 +27,8 @@ class ActPianteSchema(Schema):
 
     # from bytes to base64
     def encode_photo(self, obj):
+        print('SONO IN ENCODE PHOTO')
+        print(obj)
         if obj.FOTO_PIANTA is None:
             return None
         return base64.b64encode(obj.FOTO_PIANTA).decode("utf-8")

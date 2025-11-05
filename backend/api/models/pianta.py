@@ -17,6 +17,13 @@ class ActPianteTestataModel(db.Model):
     DATA_ULTIMA_MODIFICA = db.Column(db.DateTime)
 
 
+    dettaglio = db.relationship(
+        'ActPianteDettaglioModel',
+        backref = 'testata',
+        uselist = False
+    )
+
+
     # class constructor
     def __init__(self, ID_STATO_PIANTA, ID_ULTIMO_PROGRAMMA_ESEGUITO, ID_PIANTA=None, DATA_INSERIMENTO=None, DATA_ULTIMA_MODIFICA=None):
         # if no ID is provided, it generates a new UUID from Python to avoid INSERT errors without a default
@@ -29,7 +36,7 @@ class ActPianteTestataModel(db.Model):
 
     # represent the object when printed
     def __repr__(self):
-        return f'<id {self.ID_PIANTA}>'
+        return f'<id {self.ID_PIANTA}, stato {self.ID_STATO_PIANTA}, programma {self.ID_ULTIMO_PROGRAMMA_ESEGUITO}>'
     
 
 
