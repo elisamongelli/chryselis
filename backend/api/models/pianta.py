@@ -36,7 +36,7 @@ class ActPianteTestataModel(db.Model):
 
     # represent the object when printed
     def __repr__(self):
-        return f'<id {self.ID_PIANTA}, stato {self.ID_STATO_PIANTA}, programma {self.ID_ULTIMO_PROGRAMMA_ESEGUITO}>'
+        return f'<id {self.ID_PIANTA}>'
     
 
 

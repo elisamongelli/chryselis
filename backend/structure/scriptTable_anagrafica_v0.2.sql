@@ -15,7 +15,7 @@ CREATE TABLE ACT_ANAGRAFICA_PIANTE_DETTAGLIO (
     ID_PIANTA                       VARCHAR(100),
     NOME_PIANTA                     VARCHAR(500),
     DESCRIZIONE_PIANTA              TEXT,
-    FOTO_PIANTA                     BLOB,
+    FOTO_PIANTA                     MEDIUMBLOB,
     ID_STANZA                       VARCHAR(100),
     POSIZIONE_STANZA_X              INTEGER,
     POSIZIONE_STANZA_Y              INTEGER,

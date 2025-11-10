@@ -9,7 +9,7 @@ class ActPianteSchema(Schema):
     ID_STATO_PIANTA = fields.Str()
     NOME_PIANTA = fields.Str()
     DESCRIZIONE_PIANTA = fields.Str(validate=validate.Length(max=65535))
-    FOTO_PIANTA = fields.Method(serialize="encode_photo", deserialize="decode_photo")
+    FOTO_PIANTA = fields.Str()
     ID_STANZA = fields.Str()
     POSIZIONE_STANZA_X = fields.Int()
     POSIZIONE_STANZA_Y = fields.Int()
@@ -22,19 +22,3 @@ class ActPianteSchema(Schema):
     ID_ULTIMO_PROGRAMMA_ESEGUITO = fields.Str()
     DATA_INSERIMENTO = fields.DateTime()
     DATA_ULTIMA_MODIFICA = fields.DateTime()
-
-
-
-    # from bytes to base64
-    def encode_photo(self, obj):
-        print('SONO IN ENCODE PHOTO')
-        print(obj)
-        if obj.FOTO_PIANTA is None:
-            return None
-        return base64.b64encode(obj.FOTO_PIANTA).decode("utf-8")
-
-    # from base64 to bytes
-    def decode_photo(self, value):
-        if value is None:
-            return None
-        return base64.b64decode(value)

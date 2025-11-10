@@ -1,3 +1,4 @@
+import json
 from flask_restful import Resource
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError
@@ -90,40 +91,50 @@ class ActPianteResource(Resource):
     
 
 
+    # plant creation is implemented with multipart form-data
     def post(self):
 
-        # get JSON for REST API request body
-        data = request.get_json()
+        # gets JSON payload with all fields except the photo
+        try:
+            data = request.form.get('payload')
+            payload = json.loads(data)
+        except Exception as e:
+            return {"message": "Errore durante il recupero dei dati da salvare"}, 400
 
-        print(data)
+
+        bytes_foto = None
+        file_foto = request.files.get('image')
+        if file_foto:
+            try:
+                bytes_foto = file_foto.read()
+            except Exception as e:
+                return {"message": "Errore durante il recupero della foto da salvare"}, 400
+
 
         # create a new plant with request body's data
         nuova_pianta = ActPianteTestataModel(
-            ID_STATO_PIANTA=data['ID_STATO_PIANTA'],
-            ID_ULTIMO_PROGRAMMA_ESEGUITO=data['ID_ULTIMO_PROGRAMMA_ESEGUITO'],
+            ID_STATO_PIANTA=payload.get('ID_STATO_PIANTA'),
+            ID_ULTIMO_PROGRAMMA_ESEGUITO=payload.get('ID_ULTIMO_PROGRAMMA_ESEGUITO'),
         )
         
-        print(nuova_pianta)
-
         nuova_pianta.dettaglio = ActPianteDettaglioModel(
             ID_PIANTA=nuova_pianta.ID_PIANTA,
-            NOME_PIANTA=data['NOME_PIANTA'],
-            DESCRIZIONE_PIANTA=data['DESCRIZIONE_PIANTA'],
-            FOTO_PIANTA=one_piante_schema.decode_photo(data['FOTO_PIANTA']),
-            ID_STANZA=data['ID_STANZA'],
-            POSIZIONE_STANZA_X=data['POSIZIONE_STANZA_X'],
-            POSIZIONE_STANZA_Y=data['POSIZIONE_STANZA_Y']
+            NOME_PIANTA=payload.get('NOME_PIANTA'),
+            DESCRIZIONE_PIANTA=payload.get('DESCRIZIONE_PIANTA'),
+            FOTO_PIANTA=bytes_foto,
+            ID_STANZA=payload.get('ID_STANZA'),
+            POSIZIONE_STANZA_X=payload.get('POSIZIONE_STANZA_X'),
+            POSIZIONE_STANZA_Y=payload.get('POSIZIONE_STANZA_Y')
         )
 
-        print(nuova_pianta.dettaglio)
 
         try:
             db.session.add(nuova_pianta)
-            # db.session.add(nuova_pianta.dettaglio)
+            db.session.add(nuova_pianta.dettaglio)
             db.session.commit()
         except SQLAlchemyError as e:
             db.session.rollback()
-            return {"message": "Errore durante la creazione della pianta" + str(e)}, 500
+            return {"message": "Errore durante la creazione della pianta: " + str(e)}, 500
         
         pianta_completa = ActPianteTestataModel.query\
                             .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
