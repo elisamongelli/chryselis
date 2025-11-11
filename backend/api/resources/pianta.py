@@ -50,6 +50,7 @@ class ActPianteResource(Resource):
                               ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_2,
                               ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_3,
                               ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4]
+
                 #if orderBy is not None:
                 query = ActPianteTestataModel.query.order_by(ActPianteTestataModel.DATA_ULTIMA_MODIFICA.desc())
 
