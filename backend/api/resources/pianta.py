@@ -54,17 +54,17 @@ class ActPianteResource(Resource):
                 #if orderBy is not None:
                 query = ActPianteTestataModel.query.order_by(ActPianteTestataModel.DATA_ULTIMA_MODIFICA.desc())
 
-                pagination = query.paginate(page=page, per_page=limit, error_out=False)
                 piante = ActPianteTestataModel.query\
                             .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                            .join(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                            .all()
+                            .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
+                            .order_by(ActPianteTestataModel.DATA_ULTIMA_MODIFICA.desc())
+                pagination = piante.paginate(page=page, per_page=limit, error_out=False)
                 totalItems = pagination.total
                 totalPages = pagination.pages
                 hasMore = pagination.has_next
                 return {
                     "piante": many_piante_schema.dump(piante),
-                    "count": len(piante),
+                    "count": len(pagination.items),
                     "hasMore": hasMore,
                     "page": page,
                     "limit": limit,
