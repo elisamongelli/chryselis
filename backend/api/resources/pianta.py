@@ -40,7 +40,7 @@ class ActPianteResource(Resource):
                               ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
                               ActPianteDettaglioModel.NOME_PIANTA,
                               ActPianteDettaglioModel.DESCRIZIONE_PIANTA,
-                              ActPianteDettaglioModel.FOTO_PIANTA,
+                              #ActPianteDettaglioModel.FOTO_PIANTA,
                               ActPianteDettaglioModel.ID_STANZA,
                               ActPianteDettaglioModel.POSIZIONE_STANZA_X,
                               ActPianteDettaglioModel.POSIZIONE_STANZA_Y,
@@ -52,19 +52,22 @@ class ActPianteResource(Resource):
                               ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4]
 
                 #if orderBy is not None:
-                query = ActPianteTestataModel.query.order_by(ActPianteTestataModel.DATA_ULTIMA_MODIFICA.desc())
+                # query = ActPianteTestataModel.query.order_by(ActPianteTestataModel.DATA_ULTIMA_MODIFICA.desc())
 
-                piante = ActPianteTestataModel.query\
+                query = ActPianteTestataModel.query\
                             .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                             .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
+                            .with_entities(*fields)\
                             .order_by(ActPianteTestataModel.DATA_ULTIMA_MODIFICA.desc())
-                pagination = piante.paginate(page=page, per_page=limit, error_out=False)
+
+                pagination = query.paginate(page=page, per_page=limit, error_out=False)
+                piante = pagination.items
                 totalItems = pagination.total
                 totalPages = pagination.pages
                 hasMore = pagination.has_next
                 return {
                     "piante": many_piante_schema.dump(piante),
-                    "count": len(pagination.items),
+                    "count": len(piante),
                     "hasMore": hasMore,
                     "page": page,
                     "limit": limit,
