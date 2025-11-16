@@ -19,6 +19,27 @@ class ActPianteResource(Resource):
 
     def get(self, id=None):
 
+        fields_map = {
+            'ID_PIANTA' : ActPianteTestataModel.ID_PIANTA,
+            'ID_STATO_PIANTA' : ActPianteTestataModel.ID_STATO_PIANTA,
+            'ID_ULTIMO_PROGRAMMA_ESEGUITO' : ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
+            'DATA_INSERIMENTO' : ActPianteTestataModel.DATA_INSERIMENTO,
+            'DATA_ULTIMA_MODIFICA' : ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
+            'NOME_PIANTA' : ActPianteDettaglioModel.NOME_PIANTA,
+            'DESCRIZIONE_PIANTA' : ActPianteDettaglioModel.DESCRIZIONE_PIANTA,
+            # 'FOTO_PIANTA' : ActPianteDettaglioModel.FOTO_PIANTA,
+            'ID_STANZA' : ActPianteDettaglioModel.ID_STANZA,
+            'POSIZIONE_STANZA_X' : ActPianteDettaglioModel.POSIZIONE_STANZA_X,
+            'POSIZIONE_STANZA_Y' : ActPianteDettaglioModel.POSIZIONE_STANZA_Y,
+            'UMIDITA_CORRENTE' : ActPianteDettaglioSensoriModel.UMIDITA_CORRENTE,
+            'ACQUA_ULTIMA_INNAFFIATURA' : ActPianteDettaglioSensoriModel.ACQUA_ULTIMA_INNAFFIATURA,
+            'ALTRO_DATO_SENSORI_1' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_1,
+            'ALTRO_DATO_SENSORI_2' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_2,
+            'ALTRO_DATO_SENSORI_3' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_3,
+            'ALTRO_DATO_SENSORI_' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4
+        }
+
+
         # if ID does not exists, get all plants
         if id is None:
             try:
@@ -26,7 +47,7 @@ class ActPianteResource(Resource):
                 page = request.args.get('page', default=1, type=int)
                 limit = request.args.get('limit', default=25, type=int)
                 fields = request.args.get('fields', default=None, type=str)
-                # orderBy = request.args.get('orderBy', default='ActPianteTestataModel.DATA_ULTIMA_MODIFICA:desc', type=str)
+                orderBy = request.args.get('orderBy', default='DATA_ULTIMA_MODIFICA:desc', type=str)
 
                 if page < 1:
                     return {"message": "La pagina deve essere un valore positivo"}, 400
@@ -50,15 +71,17 @@ class ActPianteResource(Resource):
                               ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_2,
                               ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_3,
                               ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4]
-
-                #if orderBy is not None:
-                # query = ActPianteTestataModel.query.order_by(ActPianteTestataModel.DATA_ULTIMA_MODIFICA.desc())
+                else:
+                    fields = [field.strip() for field in fields.split(',') if field.strip()]
+                    fields = [fields_map[name] for name in fields if name in fields_map]
+                orderBy = orderBy.split(':')
+                
 
                 query = ActPianteTestataModel.query\
                             .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                             .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                             .with_entities(*fields)\
-                            .order_by(ActPianteTestataModel.DATA_ULTIMA_MODIFICA.desc())
+                            .order_by(fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else fields_map.get(orderBy[0]).asc())
 
                 pagination = query.paginate(page=page, per_page=limit, error_out=False)
                 piante = pagination.items
