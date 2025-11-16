@@ -38,6 +38,31 @@ class ActPianteResource(Resource):
             'ALTRO_DATO_SENSORI_3' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_3,
             'ALTRO_DATO_SENSORI_' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4
         }
+        
+        # fields to return can be chosen both if ID is None or populated
+        fields = request.args.get('fields', default=None, type=str)
+
+        if fields is None:
+            fields = [ActPianteTestataModel.ID_PIANTA,
+                        ActPianteTestataModel.ID_STATO_PIANTA,
+                        ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
+                        ActPianteTestataModel.DATA_INSERIMENTO,
+                        ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
+                        ActPianteDettaglioModel.NOME_PIANTA,
+                        ActPianteDettaglioModel.DESCRIZIONE_PIANTA,
+                        #ActPianteDettaglioModel.FOTO_PIANTA,
+                        ActPianteDettaglioModel.ID_STANZA,
+                        ActPianteDettaglioModel.POSIZIONE_STANZA_X,
+                        ActPianteDettaglioModel.POSIZIONE_STANZA_Y,
+                        ActPianteDettaglioSensoriModel.UMIDITA_CORRENTE,
+                        ActPianteDettaglioSensoriModel.ACQUA_ULTIMA_INNAFFIATURA,
+                        ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_1,
+                        ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_2,
+                        ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_3,
+                        ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4]
+        else:
+            fields = [field.strip() for field in fields.split(',') if field.strip()]
+            fields = [fields_map[name] for name in fields if name in fields_map]
 
 
         # if ID does not exists, get all plants
@@ -46,34 +71,12 @@ class ActPianteResource(Resource):
 
                 page = request.args.get('page', default=1, type=int)
                 limit = request.args.get('limit', default=25, type=int)
-                fields = request.args.get('fields', default=None, type=str)
                 orderBy = request.args.get('orderBy', default='DATA_ULTIMA_MODIFICA:desc', type=str)
 
                 if page < 1:
                     return {"message": "La pagina deve essere un valore positivo"}, 400
                 if limit < 1 or limit > 100:
                     return {"message": "Il limite deve essere compreso o uguale tra 1 e 100"}, 400
-                if fields is None:
-                    fields = [ActPianteTestataModel.ID_PIANTA,
-                              ActPianteTestataModel.ID_STATO_PIANTA,
-                              ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
-                              ActPianteTestataModel.DATA_INSERIMENTO,
-                              ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
-                              ActPianteDettaglioModel.NOME_PIANTA,
-                              ActPianteDettaglioModel.DESCRIZIONE_PIANTA,
-                              #ActPianteDettaglioModel.FOTO_PIANTA,
-                              ActPianteDettaglioModel.ID_STANZA,
-                              ActPianteDettaglioModel.POSIZIONE_STANZA_X,
-                              ActPianteDettaglioModel.POSIZIONE_STANZA_Y,
-                              ActPianteDettaglioSensoriModel.UMIDITA_CORRENTE,
-                              ActPianteDettaglioSensoriModel.ACQUA_ULTIMA_INNAFFIATURA,
-                              ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_1,
-                              ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_2,
-                              ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_3,
-                              ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4]
-                else:
-                    fields = [field.strip() for field in fields.split(',') if field.strip()]
-                    fields = [fields_map[name] for name in fields if name in fields_map]
                 orderBy = orderBy.split(':')
                 
 
@@ -104,7 +107,8 @@ class ActPianteResource(Resource):
         try:
             pianta = ActPianteTestataModel.query\
                         .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                        .join(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
+                        .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
+                        .with_entities(*fields)\
                         .filter(ActPianteTestataModel.ID_PIANTA == id).first()
         except SQLAlchemyError:
             return {"message": "Errore durante il recupero della pianta"}, 500
