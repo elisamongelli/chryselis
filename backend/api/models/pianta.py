@@ -23,6 +23,12 @@ class ActPianteTestataModel(db.Model):
         uselist = False
     )
 
+    stato = db.relationship(
+        'LookupStatiModel',
+        primaryjoin = 'ActPianteTestataModel.ID_STATO_PIANTA == foreign(LookupStatiModel.ID_STATO)',
+        uselist = False
+    )
+
 
     # class constructor
     def __init__(self, ID_STATO_PIANTA, ID_ULTIMO_PROGRAMMA_ESEGUITO, ID_PIANTA=None, DATA_INSERIMENTO=None, DATA_ULTIMA_MODIFICA=None):

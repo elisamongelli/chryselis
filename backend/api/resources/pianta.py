@@ -4,6 +4,9 @@ from flask import request
 from sqlalchemy.exc import SQLAlchemyError
 from marshmallow import ValidationError
 from api.models.pianta import ActPianteTestataModel, ActPianteDettaglioModel, ActPianteDettaglioSensoriModel
+from api.models.stato import LookupStatiModel
+from api.models.programma import LookupProgrammiModel
+from api.models.stanza import LookupStanzeModel
 from api.models import db
 from api.schemas.pianta import ActPianteSchema
 
@@ -22,6 +25,8 @@ class ActPianteResource(Resource):
         fields_map = {
             'ID_PIANTA' : ActPianteTestataModel.ID_PIANTA,
             'ID_STATO_PIANTA' : ActPianteTestataModel.ID_STATO_PIANTA,
+            'NOME_STATO' : LookupStatiModel.NOME_STATO,
+            'DESCRIZIONE_STATO' : LookupStatiModel.DESCRIZIONE_STATO,
             'ID_ULTIMO_PROGRAMMA_ESEGUITO' : ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
             'DATA_INSERIMENTO' : ActPianteTestataModel.DATA_INSERIMENTO,
             'DATA_ULTIMA_MODIFICA' : ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
@@ -45,6 +50,8 @@ class ActPianteResource(Resource):
         if fields is None:
             fields = [ActPianteTestataModel.ID_PIANTA,
                         ActPianteTestataModel.ID_STATO_PIANTA,
+                        LookupStatiModel.NOME_STATO,
+                        LookupStatiModel.DESCRIZIONE_STATO,
                         ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
                         ActPianteTestataModel.DATA_INSERIMENTO,
                         ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
@@ -83,6 +90,7 @@ class ActPianteResource(Resource):
                 query = ActPianteTestataModel.query\
                             .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                             .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
+                            .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
                             .with_entities(*fields)\
                             .order_by(fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else fields_map.get(orderBy[0]).asc())
 
