@@ -22,6 +22,7 @@ class ActPianteResource(Resource):
 
     def get(self, id=None):
 
+        # the map helps the fields attribute during REST API invoke to not write the model for each field
         fields_map = {
             'ID_PIANTA' : ActPianteTestataModel.ID_PIANTA,
             'ID_STATO_PIANTA' : ActPianteTestataModel.ID_STATO_PIANTA,
@@ -41,7 +42,7 @@ class ActPianteResource(Resource):
             'ALTRO_DATO_SENSORI_1' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_1,
             'ALTRO_DATO_SENSORI_2' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_2,
             'ALTRO_DATO_SENSORI_3' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_3,
-            'ALTRO_DATO_SENSORI_' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4
+            'ALTRO_DATO_SENSORI_4' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4
         }
         
         # fields to return can be chosen both if ID is None or populated
@@ -68,6 +69,7 @@ class ActPianteResource(Resource):
                         ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_3,
                         ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4]
         else:
+            # gets the fields list in the REST API invoke and associates them with the ones in the map
             fields = [field.strip() for field in fields.split(',') if field.strip()]
             fields = [fields_map[name] for name in fields if name in fields_map]
 
@@ -87,6 +89,8 @@ class ActPianteResource(Resource):
                 orderBy = orderBy.split(':')
                 
 
+                # query construction:
+                #   with_entities filters the query showing only the fields specified in the fields array
                 query = ActPianteTestataModel.query\
                             .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                             .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
@@ -113,11 +117,15 @@ class ActPianteResource(Resource):
         
         # else if ID is not null, get the one plant corresponding to the ID
         try:
+            # query construction:
+            #   with_entities filters the query showing only the fields specified in the fields array
+            #   filter shows the only plant with the ID specified in the path
             pianta = ActPianteTestataModel.query\
                         .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                         .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                         .with_entities(*fields)\
-                        .filter(ActPianteTestataModel.ID_PIANTA == id).first()
+                        .filter(ActPianteTestataModel.ID_PIANTA == id)\
+                        .first()
         except SQLAlchemyError:
             return {"message": "Errore durante il recupero della pianta"}, 500
 
@@ -141,6 +149,7 @@ class ActPianteResource(Resource):
             return {"message": "Errore durante il recupero dei dati da salvare"}, 400
 
 
+        # gets the photos bytes from the file attachment in the multipart form-data request
         bytes_foto = None
         file_foto = request.files.get('image')
         if file_foto:
@@ -175,9 +184,11 @@ class ActPianteResource(Resource):
             db.session.rollback()
             return {"message": "Errore durante la creazione della pianta: " + str(e)}, 500
         
+        # gets the created plant
         pianta_completa = ActPianteTestataModel.query\
                             .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                            .filter(ActPianteTestataModel.ID_PIANTA == nuova_pianta.ID_PIANTA).first()
+                            .filter(ActPianteTestataModel.ID_PIANTA == nuova_pianta.ID_PIANTA)\
+                            .first()
 
         return one_piante_schema.dump(pianta_completa), 201
 
