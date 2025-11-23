@@ -51,8 +51,8 @@ class ActPianteResource(Resource):
         if fields is None:
             fields = [ActPianteTestataModel.ID_PIANTA,
                         ActPianteTestataModel.ID_STATO_PIANTA,
-                        LookupStatiModel.NOME_STATO,
-                        LookupStatiModel.DESCRIZIONE_STATO,
+                        LookupStatiModel.NOME_STATO.label('NOME_STATO'),
+                        LookupStatiModel.DESCRIZIONE_STATO.label('DESCRIZIONE_STATO'),
                         ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
                         ActPianteTestataModel.DATA_INSERIMENTO,
                         ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
@@ -71,7 +71,7 @@ class ActPianteResource(Resource):
         else:
             # gets the fields list in the REST API invoke and associates them with the ones in the map
             fields = [field.strip() for field in fields.split(',') if field.strip()]
-            fields = [fields_map[name] for name in fields if name in fields_map]
+            fields = [fields_map[name].label(name) for name in fields if name in fields_map]
 
 
         # if ID does not exists, get all plants
