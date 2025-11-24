@@ -29,12 +29,16 @@ class ActPianteResource(Resource):
             'NOME_STATO' : LookupStatiModel.NOME_STATO,
             'DESCRIZIONE_STATO' : LookupStatiModel.DESCRIZIONE_STATO,
             'ID_ULTIMO_PROGRAMMA_ESEGUITO' : ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
+            'NOME_PROGRAMMA' : LookupProgrammiModel.NOME_PROGRAMMA,
+            'ORARIO_INIZIO_PROGRAMMA' : LookupProgrammiModel.ORARIO_INIZIO_PROGRAMMA,
+            'ORARIO_FINE_PROGRAMMA' : LookupProgrammiModel.ORARIO_FINE_PROGRAMMA,
             'DATA_INSERIMENTO' : ActPianteTestataModel.DATA_INSERIMENTO,
             'DATA_ULTIMA_MODIFICA' : ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
             'NOME_PIANTA' : ActPianteDettaglioModel.NOME_PIANTA,
             'DESCRIZIONE_PIANTA' : ActPianteDettaglioModel.DESCRIZIONE_PIANTA,
             # 'FOTO_PIANTA' : ActPianteDettaglioModel.FOTO_PIANTA,
             'ID_STANZA' : ActPianteDettaglioModel.ID_STANZA,
+            'NOME_STANZA' : LookupStanzeModel.NOME_STANZA,
             'POSIZIONE_STANZA_X' : ActPianteDettaglioModel.POSIZIONE_STANZA_X,
             'POSIZIONE_STANZA_Y' : ActPianteDettaglioModel.POSIZIONE_STANZA_Y,
             'UMIDITA_CORRENTE' : ActPianteDettaglioSensoriModel.UMIDITA_CORRENTE,
@@ -54,12 +58,16 @@ class ActPianteResource(Resource):
                         LookupStatiModel.NOME_STATO.label('NOME_STATO'),
                         LookupStatiModel.DESCRIZIONE_STATO.label('DESCRIZIONE_STATO'),
                         ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
+                        LookupProgrammiModel.NOME_PROGRAMMA.label('NOME_PROGRAMMA'),
+                        LookupProgrammiModel.ORARIO_INIZIO_PROGRAMMA.label('ORARIO_INIZIO_PROGRAMMA'),
+                        LookupProgrammiModel.ORARIO_FINE_PROGRAMMA.label('ORARIO_FINE_PROGRAMMA'),
                         ActPianteTestataModel.DATA_INSERIMENTO,
                         ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
                         ActPianteDettaglioModel.NOME_PIANTA,
                         ActPianteDettaglioModel.DESCRIZIONE_PIANTA,
                         #ActPianteDettaglioModel.FOTO_PIANTA,
                         ActPianteDettaglioModel.ID_STANZA,
+                        LookupStanzeModel.NOME_STANZA.label('NOME_STANZA'),
                         ActPianteDettaglioModel.POSIZIONE_STANZA_X,
                         ActPianteDettaglioModel.POSIZIONE_STANZA_Y,
                         ActPianteDettaglioSensoriModel.UMIDITA_CORRENTE,
@@ -95,6 +103,8 @@ class ActPianteResource(Resource):
                             .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                             .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                             .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
+                            .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO)\
+                            .join(LookupStanzeModel, LookupStanzeModel.ID_STANZA == ActPianteDettaglioModel.ID_STANZA)\
                             .with_entities(*fields)\
                             .order_by(fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else fields_map.get(orderBy[0]).asc())
                 
@@ -125,6 +135,8 @@ class ActPianteResource(Resource):
                         .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                         .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                         .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
+                        .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO)\
+                        .join(LookupStanzeModel, LookupStanzeModel.ID_STANZA == ActPianteDettaglioModel.ID_STANZA)\
                         .with_entities(*fields)\
                         .filter(ActPianteTestataModel.ID_PIANTA == id)\
                         .first()
