@@ -97,7 +97,8 @@ class ActPianteResource(Resource):
                             .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
                             .with_entities(*fields)\
                             .order_by(fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else fields_map.get(orderBy[0]).asc())
-
+                
+                
                 pagination = query.paginate(page=page, per_page=limit, error_out=False)
                 piante = pagination.items
                 totalItems = pagination.total
@@ -123,6 +124,7 @@ class ActPianteResource(Resource):
             pianta = ActPianteTestataModel.query\
                         .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                         .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
+                        .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
                         .with_entities(*fields)\
                         .filter(ActPianteTestataModel.ID_PIANTA == id)\
                         .first()
