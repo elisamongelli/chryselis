@@ -90,7 +90,8 @@ class LookupPianteProgrammiResource(Resource):
         
         # else if plant ID is not null and schedule ID is not null, get the one plants-schedules association corresponding to the IDs
         try:
-            piantaProgramma = LookupPianteProgrammiModel.query.filter(LookupPianteProgrammiModel.ID_PIANTA == idPianta and LookupPianteProgrammiModel.ID_PROGRAMMA == idProgramma).first()
+            print("id pianta = " + idPianta + "; id programma = " + idProgramma)
+            piantaProgramma = LookupPianteProgrammiModel.query.filter(LookupPianteProgrammiModel.ID_PIANTA == idPianta, LookupPianteProgrammiModel.ID_PROGRAMMA == idProgramma).first()
         except SQLAlchemyError:
             return {"message": "Errore durante il recupero dell'associazione tra le piante e i programmi"}, 500
 
@@ -134,7 +135,7 @@ class LookupPianteProgrammiResource(Resource):
     def delete(self, idPianta, idProgramma):
 
         # get the one plants-schedules association from the DB with the corresponding ID
-        piantaProgramma = LookupPianteProgrammiModel.query.filter(LookupPianteProgrammiModel.ID_PIANTA == idPianta and LookupPianteProgrammiModel.ID_PROGRAMMA == idProgramma).first()
+        piantaProgramma = LookupPianteProgrammiModel.query.filter(LookupPianteProgrammiModel.ID_PIANTA == idPianta, LookupPianteProgrammiModel.ID_PROGRAMMA == idProgramma).first()
 
         # if the ID is not found in the DB, return 404 error, plants-schedules association not found
         if not piantaProgramma:
