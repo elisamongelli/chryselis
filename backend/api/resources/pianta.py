@@ -196,7 +196,7 @@ class ActPianteResource(Resource):
             db.session.commit()
         except SQLAlchemyError as e:
             db.session.rollback()
-            return {"message": "Errore durante la creazione della pianta: " + str(e)}, 500
+            return {"message": "Errore durante la creazione della pianta"}, 500
         
         # gets the created plant
         pianta_completa = ActPianteTestataModel.query\
@@ -210,12 +210,12 @@ class ActPianteResource(Resource):
 
     def patch(self, id):
 
-        # get the one schedule from the DB with the corresponding ID
-        programma = ActPianteTestataModel.query.get(id)
+        # get the one plant from the DB with the corresponding ID
+        pianta = ActPianteTestataModel.query.get(id)
 
-        # if the ID is not found in the DB, return 404 error, schedule not found
-        if not programma:
-            return {"message": "Programma non trovato"}, 404
+        # if the ID is not found in the DB, return 404 error, plant not found
+        if not pianta:
+            return {"message": "Pianta non trovata"}, 404
         
         # get JSON for REST API request body
         # silent=True does not throw any exception if request body is empty (or not in a JSON format)
@@ -227,21 +227,21 @@ class ActPianteResource(Resource):
             # partial=True allows to get a JSON request with only a subset of fields
             valid_data = one_piante_schema.load(data, partial=True)
         except ValidationError:
-            return {"message": "I valori inseriti per la modifica del programma non sono validi"}, 400
+            return {"message": "I valori inseriti per la modifica della pianta non sono validi"}, 400
         
         # sets the allowed fields and updates only them on DB
-        allowed_fields = ['VALORE_SEQUENZA_TEMPORALE_PROGRAMMA', 'NOME_PROGRAMMA', 'ORARIO_INIZIO_PROGRAMMA', 'ORARIO_FINE_PROGRAMMA']
+        allowed_fields = ['POSIZIONE_STANZA_X', 'POSIZIONE_STANZA_Y', 'DATA_ULTIMA_MODIFICA']
         for key, value in valid_data.items():
             if key in allowed_fields:
-                setattr(programma, key, value)
+                setattr(pianta, key, value)
         
         try:
             db.session.commit()
         except SQLAlchemyError:
             db.session.rollback()
-            return {"message": "Errore durante l'aggiornamento del programma"}, 500
+            return {"message": "Errore durante l'aggiornamento della pianta"}, 500
 
-        return one_piante_schema.dump(programma), 200
+        return one_piante_schema.dump(pianta), 200
     
 
 
