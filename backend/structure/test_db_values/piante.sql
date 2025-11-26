@@ -19,7 +19,7 @@ VALUES ('87cfdbfb-8183-4952-95d7-651a0ca02c0c', 'BAGNATO', 'd9f70589-c4c9-419a-8
 
 
 
-INSERT INTO ACT_ANAGRAFICA_PIANTE_DETTAGLIO (ID_PIANTA, NOME_PIANTA, DESCRIZIONE_PIANTA, FOTO_PIANTA, ID_STANZA, POSIZIONE_STANZA_X, POSIZIONE_STANZA_Y)
+INSERT INTO ACT_ANAGRAFICA_PIANTE_DETTAGLIO (ID_PIANTA, NOME_PIANTA, DESCRIZIONE_PIANTA, ID_STANZA, POSIZIONE_STANZA_X, POSIZIONE_STANZA_Y)
 VALUES ('87cfdbfb-8183-4952-95d7-651a0ca02c0c', 'Basilico', 'Con cui Chry potrà avverare il proprio desiderio di fare il miglior pesto del MONDO.', '1a540395-a555-11f0-9cdc-9c5c8e86fa68', null, null),
         ('d68d69ea-c067-4063-9067-da6ecc8b84f5', 'Basilico', 'Con cui Chry potrà avverare il proprio desiderio di fare il miglior pesto del MONDO.', '1a540395-a555-11f0-9cdc-9c5c8e86fa68', null, null),
         ('e5e8f1a7-75da-4e68-be8d-a0085ccb63ba', 'Felce', 'Pianta che piace tanto a Christian, che starebbe benissimo su un vaso a forma di testa, ma poi farebbe sentire mio padre a disagio.', '2c1575dd-a555-11f0-9cdc-9c5c8e86fa68', 3, 5),

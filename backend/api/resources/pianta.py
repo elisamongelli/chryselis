@@ -10,6 +10,8 @@ from api.models.stanza import LookupStanzeModel
 from api.models import db
 from api.schemas.pianta import ActPianteSchema
 
+import json
+
 
 
 many_piante_schema = ActPianteSchema(many=True)
@@ -210,8 +212,12 @@ class ActPianteResource(Resource):
 
     def patch(self, id):
 
+        print("ID PIANTA: " + id) # ok
+
         # get the one plant from the DB with the corresponding ID
         pianta = ActPianteTestataModel.query.get(id)
+
+        print(pianta) # ok
 
         # if the ID is not found in the DB, return 404 error, plant not found
         if not pianta:
@@ -221,6 +227,8 @@ class ActPianteResource(Resource):
         # silent=True does not throw any exception if request body is empty (or not in a JSON format)
         data = request.get_json(silent=True) or {}
 
+        print(data) # ok
+
         try:
             # load method returnes a dictionary with all valid fields
             # if a field has a wrong data type or does not exist on DB table, it throws a ValidationError
@@ -229,11 +237,18 @@ class ActPianteResource(Resource):
         except ValidationError:
             return {"message": "I valori inseriti per la modifica della pianta non sono validi"}, 400
         
+        print("After data validation")
+        
         # sets the allowed fields and updates only them on DB
         allowed_fields = ['POSIZIONE_STANZA_X', 'POSIZIONE_STANZA_Y', 'DATA_ULTIMA_MODIFICA']
         for key, value in valid_data.items():
-            if key in allowed_fields:
-                setattr(pianta, key, value)
+            print("key: " + key + "    value: " + json.dumps(value))
+            for t_key in value:
+                # print("t_key: " + t_key)
+                # print("t_value: " + json.dumps(value))
+                if t_key in allowed_fields:
+                    print(t_key + " is in allowed fields")
+                    # setattr(pianta, key, value)
         
         try:
             db.session.commit()

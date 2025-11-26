@@ -6,6 +6,8 @@ from api.models.programma import LookupProgrammiModel
 from api.models import db
 from api.schemas.programma import LookupProgrammiSchema
 
+import json
+
 
 
 many_programmi_schema = LookupProgrammiSchema(many=True)
@@ -112,6 +114,7 @@ class LookupProgrammiResource(Resource):
         # sets the allowed fields and updates only them on DB
         allowed_fields = ['VALORE_SEQUENZA_TEMPORALE_PROGRAMMA', 'NOME_PROGRAMMA', 'ORARIO_INIZIO_PROGRAMMA', 'ORARIO_FINE_PROGRAMMA']
         for key, value in valid_data.items():
+            print("key: " + key + "    value: " + json.dumps(value))
             if key in allowed_fields:
                 setattr(programma, key, value)
         
