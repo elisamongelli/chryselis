@@ -14,11 +14,18 @@ class ActPianteTestataModel(db.Model):
     ID_STATO_PIANTA = db.Column(db.String(500), db.ForeignKey('lkp_stati_piante.ID_STATO'))
     ID_ULTIMO_PROGRAMMA_ESEGUITO = db.Column(db.String(100), db.ForeignKey('lkp_programmi.ID_PROGRAMMA'))
     DATA_INSERIMENTO = db.Column(db.DateTime)
-    DATA_ULTIMA_MODIFICA = db.Column(db.DateTime)
+    DATA_ULTIMA_MODIFICA = db.Column(db.DateTime, onupdate=datetime.datetime.now)
 
 
     dettaglio = db.relationship(
         'ActPianteDettaglioModel',
+        backref = 'testata',
+        uselist = False
+    )
+
+
+    dettaglio_sensori = db.relationship(
+        'ActPianteDettaglioSensoriModel',
         backref = 'testata',
         uselist = False
     )

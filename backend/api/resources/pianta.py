@@ -1,4 +1,4 @@
-import json
+import json, datetime
 from flask_restful import Resource
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError
@@ -9,8 +9,6 @@ from api.models.programma import LookupProgrammiModel
 from api.models.stanza import LookupStanzeModel
 from api.models import db
 from api.schemas.pianta import ActPianteSchema
-
-import json
 
 
 
@@ -157,7 +155,7 @@ class ActPianteResource(Resource):
     # plant creation is implemented with multipart form-data
     def post(self):
 
-        # gets JSON payload with all fields except the photo
+        # gets JSON payload with all fields except for the photo
         try:
             data = request.form.get('payload')
             payload = json.loads(data)
@@ -211,45 +209,102 @@ class ActPianteResource(Resource):
 
 
     def patch(self, id):
-
-        print("ID PIANTA: " + id) # ok
-
+        
         # get the one plant from the DB with the corresponding ID
         pianta = ActPianteTestataModel.query.get(id)
-
-        print(pianta) # ok
 
         # if the ID is not found in the DB, return 404 error, plant not found
         if not pianta:
             return {"message": "Pianta non trovata"}, 404
         
-        # get JSON for REST API request body
-        # silent=True does not throw any exception if request body is empty (or not in a JSON format)
-        data = request.get_json(silent=True) or {}
 
-        print(data) # ok
+        # gets JSON payload with all fields to be updated except for the photo
+        payload=None
+        try:
+            data = request.form.get('payload')
+            if data is not None:
+                payload = json.loads(data)
+        except Exception as e:
+            return {"message": "Errore durante il recupero dei dati da salvare"}, 400
 
+
+        # gets the photos bytes from the file attachment in the multipart form-data request
+        bytes_foto = None
+        file_foto = request.files.get('image')
+        if file_foto:
+            try:
+                bytes_foto = file_foto.read()
+            except Exception as e:
+                return {"message": "Errore durante il recupero della foto da salvare"}, 400
+
+        
+
+        valid_data=None
         try:
             # load method returnes a dictionary with all valid fields
-            # if a field has a wrong data type or does not exist on DB table, it throws a ValidationError
-            # partial=True allows to get a JSON request with only a subset of fields
-            valid_data = one_piante_schema.load(data, partial=True)
+            #   if a field has a wrong data type or does not exist on DB table, it throws a ValidationError
+            #   partial=True allows to get a JSON request with only a subset of fields
+            if payload is not None:
+                valid_data = one_piante_schema.load(payload, partial=True)
         except ValidationError:
             return {"message": "I valori inseriti per la modifica della pianta non sono validi"}, 400
         
-        print("After data validation")
         
         # sets the allowed fields and updates only them on DB
-        allowed_fields = ['POSIZIONE_STANZA_X', 'POSIZIONE_STANZA_Y', 'DATA_ULTIMA_MODIFICA']
-        for key, value in valid_data.items():
-            print("key: " + key + "    value: " + json.dumps(value))
-            for t_key, t_value in value.items():
-                print("t_key: " + t_key + "    t_value: " + json.dumps(t_value))
-                if t_key in allowed_fields:
-                    print(t_key + " is in allowed fields")
-                    setattr(pianta, t_key, t_value)
+        allowed_fields = ['NOME_PIANTA',
+                          'DESCRIZIONE_PIANTA',
+                          'ID_STATO_PIANTA',
+                          'ID_STANZA',
+                          'POSIZIONE_STANZA_X',
+                          'POSIZIONE_STANZA_Y',
+                          'ID_ULTIMO_PROGRAMMA_ESEGUITO',
+                          'UMIDITA_CORRENTE',
+                          'ACQUA_ULTIMA_INNAFFIATURA',
+                          'ALTRO_DATO_SENSORI_1',
+                          'ALTRO_DATO_SENSORI_2',
+                          'ALTRO_DATO_SENSORI_3',
+                          'ALTRO_DATO_SENSORI_4']
+        # it scrolls the valid_data dictionary
+        #   key contains the header table's field or the table itself, like "dettaglio" and "dettaglio_sensori"
+        #   value contains the corresponding value or the json payload with all the fields of the current table
+        if valid_data is not None:
+            for key, value in valid_data.items():
+                # if current table is the header table, key is the specific field
+                if key in allowed_fields:
+                    setattr(pianta, key, value)
+                else:
+                    # gets the relationship between header plant and its details
+                    pianta_relationship = getattr(pianta, key)
+                    # when the key is "dettaglio_sensori" the relationship might not exist
+                    #   because it's not created during the plant creation
+                    if key == 'dettaglio_sensori' and pianta_relationship is None:
+                        try:
+                            # initializes the relationship between header plant and sensors details
+                            pianta_relationship = ActPianteDettaglioSensoriModel(
+                                ID_PIANTA=id,
+                                UMIDITA_CORRENTE=None,
+                                ACQUA_ULTIMA_INNAFFIATURA=None,
+                                ALTRO_DATO_SENSORI_1=None,
+                                ALTRO_DATO_SENSORI_2=None,
+                                ALTRO_DATO_SENSORI_3=None,
+                                ALTRO_DATO_SENSORI_4=None
+                            )
+                            pianta.dettaglio_sensori = pianta_relationship
+                            db.session.add(pianta_relationship)
+                        except SQLAlchemyError as e:
+                            db.session.rollback()
+                            return {"message": "Errore durante l'aggiornamento dei dati dei sensori"}, 500
+                    # it scrolls the json payload for the current table
+                    for t_key, t_value in value.items():
+                        # if the current field is allowed, it updates its value
+                        if t_key in allowed_fields:
+                            setattr(pianta_relationship, t_key, t_value)
         
+
         try:
+            if bytes_foto is not None:
+                pianta.dettaglio.FOTO_PIANTA = bytes_foto
+            pianta.DATA_ULTIMA_MODIFICA = datetime.datetime.now()
             db.session.commit()
         except SQLAlchemyError:
             db.session.rollback()
