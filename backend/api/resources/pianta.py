@@ -243,12 +243,11 @@ class ActPianteResource(Resource):
         allowed_fields = ['POSIZIONE_STANZA_X', 'POSIZIONE_STANZA_Y', 'DATA_ULTIMA_MODIFICA']
         for key, value in valid_data.items():
             print("key: " + key + "    value: " + json.dumps(value))
-            for t_key in value:
-                # print("t_key: " + t_key)
-                # print("t_value: " + json.dumps(value))
+            for t_key, t_value in value.items():
+                print("t_key: " + t_key + "    t_value: " + json.dumps(t_value))
                 if t_key in allowed_fields:
                     print(t_key + " is in allowed fields")
-                    # setattr(pianta, key, value)
+                    setattr(pianta, t_key, t_value)
         
         try:
             db.session.commit()
