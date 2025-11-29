@@ -179,6 +179,7 @@ class ActPianteResource(Resource):
             ID_ULTIMO_PROGRAMMA_ESEGUITO=payload.get('ID_ULTIMO_PROGRAMMA_ESEGUITO'),
         )
         
+        # need to create new model for plant details, because it does not exist in the database yet
         nuova_pianta.dettaglio = ActPianteDettaglioModel(
             ID_PIANTA=nuova_pianta.ID_PIANTA,
             NOME_PIANTA=payload.get('NOME_PIANTA'),
@@ -201,6 +202,9 @@ class ActPianteResource(Resource):
         # gets the created plant
         pianta_completa = ActPianteTestataModel.query\
                             .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
+                            .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
+                            .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO)\
+                            .join(LookupStanzeModel, LookupStanzeModel.ID_STANZA == ActPianteDettaglioModel.ID_STANZA)\
                             .filter(ActPianteTestataModel.ID_PIANTA == nuova_pianta.ID_PIANTA)\
                             .first()
 
@@ -309,8 +313,18 @@ class ActPianteResource(Resource):
         except SQLAlchemyError:
             db.session.rollback()
             return {"message": "Errore durante l'aggiornamento della pianta"}, 500
+        
+        # gets the created plant
+        pianta_completa = ActPianteTestataModel.query\
+                            .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == id)\
+                            .join(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == id)\
+                            .join(LookupStatiModel, LookupStatiModel.ID_STATO == pianta.ID_STATO_PIANTA)\
+                            .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO)\
+                            .join(LookupStanzeModel, LookupStanzeModel.ID_STANZA == ActPianteDettaglioModel.ID_STANZA)\
+                            .filter(ActPianteTestataModel.ID_PIANTA == id)\
+                            .first()
 
-        return one_piante_schema.dump(pianta), 200
+        return one_piante_schema.dump(pianta_completa), 200
     
 
 

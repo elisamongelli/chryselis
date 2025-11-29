@@ -26,8 +26,8 @@ class ActPianteSchema(Schema):
     ALTRO_DATO_SENSORI_2 = fields.Decimal(attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_2', as_string=True, places=2)
     ALTRO_DATO_SENSORI_3 = fields.Decimal(attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_3', as_string=True, places=2)
     ALTRO_DATO_SENSORI_4 = fields.Decimal(attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_4', as_string=True, places=2)
-    DATA_INSERIMENTO = fields.DateTime()
     DATA_ULTIMA_MODIFICA = fields.DateTime()
+    DATA_INSERIMENTO = fields.DateTime()
 
 
     # gets each row from KeyedTuple and trasforms it into a dictionary
