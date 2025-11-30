@@ -16,6 +16,50 @@ many_piante_schema = ActPianteSchema(many=True)
 one_piante_schema = ActPianteSchema()
 
 
+all_plant_fields_without_sensors = [ActPianteTestataModel.ID_PIANTA,
+                                    ActPianteTestataModel.ID_STATO_PIANTA,
+                                    LookupStatiModel.NOME_STATO.label('NOME_STATO'),
+                                    LookupStatiModel.DESCRIZIONE_STATO.label('DESCRIZIONE_STATO'),
+                                    ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
+                                    LookupProgrammiModel.NOME_PROGRAMMA.label('NOME_PROGRAMMA'),
+                                    LookupProgrammiModel.ORARIO_INIZIO_PROGRAMMA.label('ORARIO_INIZIO_PROGRAMMA'),
+                                    LookupProgrammiModel.ORARIO_FINE_PROGRAMMA.label('ORARIO_FINE_PROGRAMMA'),
+                                    ActPianteTestataModel.DATA_INSERIMENTO,
+                                    ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
+                                    ActPianteDettaglioModel.NOME_PIANTA,
+                                    ActPianteDettaglioModel.DESCRIZIONE_PIANTA,
+                                    #ActPianteDettaglioModel.FOTO_PIANTA,
+                                    ActPianteDettaglioModel.ID_STANZA,
+                                    LookupStanzeModel.NOME_STANZA.label('NOME_STANZA'),
+                                    ActPianteDettaglioModel.POSIZIONE_STANZA_X,
+                                    ActPianteDettaglioModel.POSIZIONE_STANZA_Y]
+
+
+all_plant_fields = [ActPianteTestataModel.ID_PIANTA,
+                    ActPianteTestataModel.ID_STATO_PIANTA,
+                    LookupStatiModel.NOME_STATO.label('NOME_STATO'),
+                    LookupStatiModel.DESCRIZIONE_STATO.label('DESCRIZIONE_STATO'),
+                    ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
+                    LookupProgrammiModel.NOME_PROGRAMMA.label('NOME_PROGRAMMA'),
+                    LookupProgrammiModel.ORARIO_INIZIO_PROGRAMMA.label('ORARIO_INIZIO_PROGRAMMA'),
+                    LookupProgrammiModel.ORARIO_FINE_PROGRAMMA.label('ORARIO_FINE_PROGRAMMA'),
+                    ActPianteTestataModel.DATA_INSERIMENTO,
+                    ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
+                    ActPianteDettaglioModel.NOME_PIANTA,
+                    ActPianteDettaglioModel.DESCRIZIONE_PIANTA,
+                    #ActPianteDettaglioModel.FOTO_PIANTA,
+                    ActPianteDettaglioModel.ID_STANZA,
+                    LookupStanzeModel.NOME_STANZA.label('NOME_STANZA'),
+                    ActPianteDettaglioModel.POSIZIONE_STANZA_X,
+                    ActPianteDettaglioModel.POSIZIONE_STANZA_Y,
+                    ActPianteDettaglioSensoriModel.UMIDITA_CORRENTE,
+                    ActPianteDettaglioSensoriModel.ACQUA_ULTIMA_INNAFFIATURA,
+                    ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_1,
+                    ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_2,
+                    ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_3,
+                    ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4]
+
+
 
 class ActPianteResource(Resource):
 
@@ -53,29 +97,7 @@ class ActPianteResource(Resource):
         fields = request.args.get('fields', default=None, type=str)
 
         if fields is None:
-            fields = [ActPianteTestataModel.ID_PIANTA,
-                        ActPianteTestataModel.ID_STATO_PIANTA,
-                        LookupStatiModel.NOME_STATO.label('NOME_STATO'),
-                        LookupStatiModel.DESCRIZIONE_STATO.label('DESCRIZIONE_STATO'),
-                        ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
-                        LookupProgrammiModel.NOME_PROGRAMMA.label('NOME_PROGRAMMA'),
-                        LookupProgrammiModel.ORARIO_INIZIO_PROGRAMMA.label('ORARIO_INIZIO_PROGRAMMA'),
-                        LookupProgrammiModel.ORARIO_FINE_PROGRAMMA.label('ORARIO_FINE_PROGRAMMA'),
-                        ActPianteTestataModel.DATA_INSERIMENTO,
-                        ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
-                        ActPianteDettaglioModel.NOME_PIANTA,
-                        ActPianteDettaglioModel.DESCRIZIONE_PIANTA,
-                        #ActPianteDettaglioModel.FOTO_PIANTA,
-                        ActPianteDettaglioModel.ID_STANZA,
-                        LookupStanzeModel.NOME_STANZA.label('NOME_STANZA'),
-                        ActPianteDettaglioModel.POSIZIONE_STANZA_X,
-                        ActPianteDettaglioModel.POSIZIONE_STANZA_Y,
-                        ActPianteDettaglioSensoriModel.UMIDITA_CORRENTE,
-                        ActPianteDettaglioSensoriModel.ACQUA_ULTIMA_INNAFFIATURA,
-                        ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_1,
-                        ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_2,
-                        ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_3,
-                        ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4]
+            fields = all_plant_fields
         else:
             # gets the fields list in the REST API invoke and associates them with the ones in the map
             fields = [field.strip() for field in fields.split(',') if field.strip()]
@@ -205,6 +227,7 @@ class ActPianteResource(Resource):
                             .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
                             .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO)\
                             .join(LookupStanzeModel, LookupStanzeModel.ID_STANZA == ActPianteDettaglioModel.ID_STANZA)\
+                            .with_entities(*all_plant_fields_without_sensors)\
                             .filter(ActPianteTestataModel.ID_PIANTA == nuova_pianta.ID_PIANTA)\
                             .first()
 
@@ -314,13 +337,14 @@ class ActPianteResource(Resource):
             db.session.rollback()
             return {"message": "Errore durante l'aggiornamento della pianta"}, 500
         
-        # gets the created plant
+        # gets the updated plant
         pianta_completa = ActPianteTestataModel.query\
-                            .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == id)\
-                            .join(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == id)\
-                            .join(LookupStatiModel, LookupStatiModel.ID_STATO == pianta.ID_STATO_PIANTA)\
+                            .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
+                            .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
+                            .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
                             .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO)\
                             .join(LookupStanzeModel, LookupStanzeModel.ID_STANZA == ActPianteDettaglioModel.ID_STANZA)\
+                            .with_entities(*all_plant_fields)\
                             .filter(ActPianteTestataModel.ID_PIANTA == id)\
                             .first()
 
