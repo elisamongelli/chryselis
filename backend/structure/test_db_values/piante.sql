@@ -1,5 +1,6 @@
 INSERT INTO ACT_ANAGRAFICA_PIANTE_TESTATA (ID_PIANTA, ID_STATO_PIANTA, ID_ULTIMO_PROGRAMMA_ESEGUITO, DATA_INSERIMENTO, DATA_ULTIMA_MODIFICA)
-VALUES ('4ef7d9fe-57ea-4255-ad99-3aff62c74bb8', 'UMIDO', 'd9f70589-c4c9-419a-8e79-45d9a7203b40', '2025-11-26T22:08:54', '2025-11-26T22:08:54'),
+VALUES ('457cdace-7d89-43b6-963c-3a87c1cba52c', 'SECCO', 'b088846c-f6cd-4996-9185-bff7569b6dc2', '2025-11-30T17:32:15', '2025-11-30T17:34:35'),
+        ('4ef7d9fe-57ea-4255-ad99-3aff62c74bb8', 'UMIDO', 'd9f70589-c4c9-419a-8e79-45d9a7203b40', '2025-11-26T22:08:54', '2025-11-26T22:08:54'),
         ('87cfdbfb-8183-4952-95d7-651a0ca02c0c', 'BAGNATO', 'd9f70589-c4c9-419a-8e79-45d9a7203b40', '2025-11-25T22:33:51', '2025-11-25T22:33:51'),
         ('d68d69ea-c067-4063-9067-da6ecc8b84f5', 'BAGNATO', 'd9f70589-c4c9-419a-8e79-45d9a7203b40', '2025-11-24T23:02:42', '2025-11-24T23:02:42'),
         ('e5e8f1a7-75da-4e68-be8d-a0085ccb63ba', 'TROPPO_SECCO', 'c0e5c1ea-413e-4af1-b514-a9b29d03fff0', '2025-11-24T22:19:49', '2025-11-24T22:19:49'),
@@ -21,7 +22,8 @@ VALUES ('4ef7d9fe-57ea-4255-ad99-3aff62c74bb8', 'UMIDO', 'd9f70589-c4c9-419a-8e7
 
 
 INSERT INTO ACT_ANAGRAFICA_PIANTE_DETTAGLIO (ID_PIANTA, NOME_PIANTA, DESCRIZIONE_PIANTA, ID_STANZA, POSIZIONE_STANZA_X, POSIZIONE_STANZA_Y)
-VALUES ('4ef7d9fe-57ea-4255-ad99-3aff62c74bb8', 'Margherita', 'Fiore a cui strappare i petali per comprendere in modo particolarmente profondo e affidabile il proprio destino.', '1a540395-a555-11f0-9cdc-9c5c8e86fa68', 2, 2),
+VALUES ('457cdace-7d89-43b6-963c-3a87c1cba52c', 'Ulivo', 'Ulivo piccolo in vaso da tenere in appartamento (ovviamente non ci farai mai l''olio, ma almeno la casa non puzza di frantoio).', '2c1575dd-a555-11f0-9cdc-9c5c8e86fa68', 3, 5),
+        ('4ef7d9fe-57ea-4255-ad99-3aff62c74bb8', 'Margherita', 'Fiore a cui strappare i petali per comprendere in modo particolarmente profondo e affidabile il proprio destino.', '1a540395-a555-11f0-9cdc-9c5c8e86fa68', 2, 2),
         ('87cfdbfb-8183-4952-95d7-651a0ca02c0c', 'Basilico', 'Con cui Chry potrà avverare il proprio desiderio di fare il miglior pesto del MONDO.', '1a540395-a555-11f0-9cdc-9c5c8e86fa68', null, null),
         ('d68d69ea-c067-4063-9067-da6ecc8b84f5', 'Basilico', 'Con cui Chry potrà avverare il proprio desiderio di fare il miglior pesto del MONDO.', '1a540395-a555-11f0-9cdc-9c5c8e86fa68', null, null),
         ('e5e8f1a7-75da-4e68-be8d-a0085ccb63ba', 'Felce', 'Pianta che piace tanto a Christian, che starebbe benissimo su un vaso a forma di testa, ma poi farebbe sentire mio padre a disagio.', '2c1575dd-a555-11f0-9cdc-9c5c8e86fa68', 3, 5),

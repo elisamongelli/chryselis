@@ -354,18 +354,23 @@ class ActPianteResource(Resource):
 
     def delete(self, id):
 
-        # get the one schedule from the DB with the corresponding ID
-        programma = ActPianteTestataModel.query.get(id)
+        # get the one plant from the DB with the corresponding ID
+        plant = ActPianteTestataModel.query.get(id)
+        plant_detail = ActPianteDettaglioModel.query.get(id)
+        plant_detail_sensors = ActPianteDettaglioSensoriModel.query.get(id)
 
-        # if the ID is not found in the DB, return 404 error, schedule not found
-        if not programma:
-            return {"message": "Programma non trovato"}, 404
+        # if the ID is not found in the DB, return 404 error, plant not found
+        if not plant:
+            return {"message": "Pianta non trovata"}, 404
 
-        # else delete the schedule from the DB
+        # else delete the plant from the DB
         try:
-            db.session.delete(programma)
+            if plant_detail_sensors is not None:
+                db.session.delete(plant_detail_sensors)
+            db.session.delete(plant_detail)
+            db.session.delete(plant)
             db.session.commit()
-            return {"message": "Programma eliminato"}, 204
+            return {"message": "Pianta eliminata"}, 204
         except SQLAlchemyError:
             db.session.rollback()
-            return {"message": "Errore durante la cancellazione del programma"}, 500
+            return {"message": "Errore durante la cancellazione della pianta"}, 500
