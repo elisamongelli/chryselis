@@ -1,5 +1,4 @@
 from marshmallow import Schema, fields, validate, pre_dump
-import base64
 
 
 
@@ -11,7 +10,6 @@ class ActPianteSchema(Schema):
     ID_STATO_PIANTA = fields.Str()
     NOME_STATO = fields.Str(attribute='stato.NOME_STATO')
     DESCRIZIONE_STATO = fields.Str(attribute='stato.DESCRIZIONE_STATO')
-    FOTO_PIANTA = fields.Str()
     ID_STANZA = fields.Str(attribute='dettaglio.ID_STANZA')
     NOME_STANZA = fields.Str(attribute='stanza.NOME_STANZA')
     POSIZIONE_STANZA_X = fields.Int(attribute='dettaglio.POSIZIONE_STANZA_X')
@@ -66,3 +64,8 @@ class ActPianteSchema(Schema):
             return out
         
         return [from_row_to_dict(row) for row in data] if many else from_row_to_dict(data)
+
+
+
+class ActFotoPianteSchema(Schema):
+    FOTO_PIANTA = fields.Str()

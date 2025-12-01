@@ -1,6 +1,5 @@
+import uuid, datetime
 from api.models import db
-import uuid
-import datetime
 
 
 
