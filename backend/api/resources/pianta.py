@@ -11,6 +11,9 @@ from api.models.stanza import LookupStanzeModel
 from api.schemas.pianta import ActPianteSchema, ActFotoPianteSchema
 
 
+import base64
+
+
 
 many_piante_schema = ActPianteSchema(many=True)
 one_piante_schema = ActPianteSchema()
@@ -59,6 +62,12 @@ all_plant_fields = [ActPianteTestataModel.ID_PIANTA,
                     ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_2,
                     ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_3,
                     ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4]
+
+
+photo_fields = [ActPianteTestataModel.ID_PIANTA,
+                ActPianteDettaglioModel.FOTO_PIANTA]
+
+
 
 
 
@@ -382,12 +391,14 @@ class ActPianteResource(Resource):
 class ActFotoPianteResource(Resource):
 
 
+
     def get(self, id=None):
 
         
-        # if ID does not exists, get all plants
+        # if ID does not exists, get all plants' photos
         if id is None:
             print("Check field with list of IDs")
+            return {"message": "Restituire ID e foto delle piante indicate in un query parameter"}, 418
             """ try:
 
                 page = request.args.get('page', default=1, type=int)
@@ -428,28 +439,32 @@ class ActFotoPianteResource(Resource):
                     "totalItems": totalItems
                 }, 200
             except SQLAlchemyError:
-                return {"message": "Errore durante il recupero delle piante"}, 500
-        
+                return {"message": "Errore durante il recupero delle piante"}, 500 """
+
+
+        print("Check field with specified ID: " + id)
         # else if ID is not null, get the one plant corresponding to the ID
         try:
             # query construction:
-            #   with_entities filters the query showing only the fields specified in the fields array
+            #   with_entities filters the query showing only the fields specified in the fields array (ID_PIANTA, FOTO_PIANTA)
             #   filter shows the only plant with the ID specified in the path
             pianta = ActPianteTestataModel.query\
                         .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                        .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                        .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
-                        .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO)\
-                        .join(LookupStanzeModel, LookupStanzeModel.ID_STANZA == ActPianteDettaglioModel.ID_STANZA)\
-                        .with_entities(*fields)\
+                        .with_entities(*photo_fields)\
                         .filter(ActPianteTestataModel.ID_PIANTA == id)\
                         .first()
+            print("id pianta:" + pianta.ID_PIANTA)
+            """ foto_pianta_data = pianta.FOTO_PIANTA.read()
+            foto_pianta_byte_array = bytearray(foto_pianta_data)
+            encoded_data = base64.b64encode(bytes(foto_pianta_byte_array)).decode('utf-8')
+            print("foto pianta:" + encoded_data) """
         except SQLAlchemyError:
-            return {"message": "Errore durante il recupero della pianta"}, 500 """
+            return {"message": "Errore durante il recupero della pianta"}, 500
+        
 
         # if the plant has been retrieve successfully from the DB
         if pianta:
-            return one_piante_schema.dump(pianta), 200
+            return one_foto_piante_schema.dump(pianta), 200
 
         # else return 404 error, plant not found
         return {"message": "Pianta non trovata"}, 404
