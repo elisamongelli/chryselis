@@ -1,5 +1,5 @@
-import json, datetime
-from flask import request
+import json, datetime, io, zipfile, imghdr
+from flask import request, Response
 from flask_restful import Resource
 from sqlalchemy.exc import SQLAlchemyError
 from marshmallow import ValidationError
@@ -398,6 +398,39 @@ class ActFotoPianteResource(Resource):
         # if ID does not exists, get all plants' photos
         if id is None:
             print("Check field with list of IDs")
+            id_list_string = "457cdace-7d89-43b6-963c-3a87c1cba52c,44de2a81-9b20-4b9a-b18e-4b97dfc697d1,4ef7d9fe-57ea-4255-ad99-3aff62c74bb8"
+            
+            id_list = [s.strip() for s in id_list_string.split(',') if s.strip()]
+            if not id_list:
+                return {"message": "E' necessario specificare gli ID delle piante"}, 400
+            
+
+            try:
+            
+                piante = ActPianteTestataModel.query\
+                    .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
+                    .with_entities(*photo_fields)\
+                    .filter(ActPianteTestataModel.ID_PIANTA.in_(id_list))\
+                    .all()
+                
+                # return many_piante_schema.dump(piante)
+            
+            except SQLAlchemyError:
+                return {"message": "Errore durante il recupero delle foto delle piante"}, 500
+            
+            found_map = {pianta.ID_PIANTA: pianta.FOTO_PIANTA for pianta in piante}
+
+            buffer = io.BytesIO()
+            with zipfile.ZipFile(buffer, 'w', compression=zipfile.ZIP_DEFLATED) as zip_file
+                for single_id in id_list:
+                    foto = found_map.get(single_id)
+                    if foto:
+                        extension = imghdr.what(None, h=foto) or 'bin'
+                        filename = f"{single_id}.{extension}"
+                        zip_file.writestr(filename, foto)
+                    else:
+                        zip_file.writestr(f"{single_id}_missing.txt", f"Foto non trovata per ID {single_id}")
+            
             return {"message": "Restituire ID e foto delle piante indicate in un query parameter"}, 418
             """ try:
 
@@ -454,6 +487,8 @@ class ActFotoPianteResource(Resource):
                         .filter(ActPianteTestataModel.ID_PIANTA == id)\
                         .first()
             print("id pianta:" + pianta.ID_PIANTA)
+            """ foto_pianta = pianta.FOTO_PIANTA
+            return Response(foto_pianta, mimetype='application/octet-stream') """
             """ foto_pianta_data = pianta.FOTO_PIANTA.read()
             foto_pianta_byte_array = bytearray(foto_pianta_data)
             encoded_data = base64.b64encode(bytes(foto_pianta_byte_array)).decode('utf-8')
@@ -462,9 +497,10 @@ class ActFotoPianteResource(Resource):
             return {"message": "Errore durante il recupero della pianta"}, 500
         
 
-        # if the plant has been retrieve successfully from the DB
+        # if the plant has been retrieve successfully from the DB, returnes its photo
         if pianta:
-            return one_foto_piante_schema.dump(pianta), 200
+            foto_pianta = pianta.FOTO_PIANTA
+            return Response(foto_pianta, mimetype='application/octet-stream')
 
         # else return 404 error, plant not found
         return {"message": "Pianta non trovata"}, 404
