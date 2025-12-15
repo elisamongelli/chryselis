@@ -1,8 +1,9 @@
-import json, datetime, io, zipfile, imghdr
+import json, datetime, io, zipfile
 from flask import request, Response
 from flask_restful import Resource
 from sqlalchemy.exc import SQLAlchemyError
 from marshmallow import ValidationError
+from PIL import Image
 from api.models import db
 from api.models.pianta import ActPianteTestataModel, ActPianteDettaglioModel, ActPianteDettaglioSensoriModel
 from api.models.stato import LookupStatiModel
@@ -10,8 +11,6 @@ from api.models.programma import LookupProgrammiModel
 from api.models.stanza import LookupStanzeModel
 from api.schemas.pianta import ActPianteSchema, ActFotoPianteSchema
 
-
-import base64
 
 
 
@@ -397,8 +396,10 @@ class ActFotoPianteResource(Resource):
         
         # if ID does not exists, get all plants' photos
         if id is None:
+            
             print("Check field with list of IDs")
-            id_list_string = "457cdace-7d89-43b6-963c-3a87c1cba52c,44de2a81-9b20-4b9a-b18e-4b97dfc697d1,4ef7d9fe-57ea-4255-ad99-3aff62c74bb8"
+            # id_list_string = "457cdace-7d89-43b6-963c-3a87c1cba52c,44de2a81-9b20-4b9a-b18e-4b97dfc697d1,4ef7d9fe-57ea-4255-ad99-3aff62c74bb8"
+            id_list_string = "f7cd82b1-165c-48c4-8f1f-f42d5308141f,e800d543-359c-40ee-b61a-623e114ff404,32c70991-171a-4e85-b22b-cae08f9dc0cc,00000000-0000-0000-0000-000000000000"
             
             id_list = [s.strip() for s in id_list_string.split(',') if s.strip()]
             if not id_list:
@@ -421,14 +422,17 @@ class ActFotoPianteResource(Resource):
             found_map = {pianta.ID_PIANTA: pianta.FOTO_PIANTA for pianta in piante}
 
             buffer = io.BytesIO()
-            with zipfile.ZipFile(buffer, 'w', compression=zipfile.ZIP_DEFLATED) as zip_file
+            with zipfile.ZipFile(buffer, 'w', compression=zipfile.ZIP_DEFLATED) as zip_file:
                 for single_id in id_list:
+                    print("Single id: " + single_id)
                     foto = found_map.get(single_id)
                     if foto:
-                        extension = imghdr.what(None, h=foto) or 'bin'
+                        extension = Image.open(io.BytesIO(foto)).format.lower()
                         filename = f"{single_id}.{extension}"
+                        print("Photo exists: " + filename + "." + extension)
                         zip_file.writestr(filename, foto)
                     else:
+                        print("Photo missing")
                         zip_file.writestr(f"{single_id}_missing.txt", f"Foto non trovata per ID {single_id}")
             
             return {"message": "Restituire ID e foto delle piante indicate in un query parameter"}, 418
