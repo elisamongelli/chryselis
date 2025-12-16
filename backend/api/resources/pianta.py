@@ -398,8 +398,8 @@ class ActFotoPianteResource(Resource):
         if id is None:
             
             print("Check field with list of IDs")
-            # id_list_string = "457cdace-7d89-43b6-963c-3a87c1cba52c,44de2a81-9b20-4b9a-b18e-4b97dfc697d1,4ef7d9fe-57ea-4255-ad99-3aff62c74bb8"
-            id_list_string = "f7cd82b1-165c-48c4-8f1f-f42d5308141f,e800d543-359c-40ee-b61a-623e114ff404,32c70991-171a-4e85-b22b-cae08f9dc0cc,00000000-0000-0000-0000-000000000000"
+            id_list_string = "457cdace-7d89-43b6-963c-3a87c1cba52c,44de2a81-9b20-4b9a-b18e-4b97dfc697d1,4ef7d9fe-57ea-4255-ad99-3aff62c74bb8,00000000-0000-0000-0000-000000000000"
+            # id_list_string = "f7cd82b1-165c-48c4-8f1f-f42d5308141f,e800d543-359c-40ee-b61a-623e114ff404,32c70991-171a-4e85-b22b-cae08f9dc0cc,00000000-0000-0000-0000-000000000000"
             
             id_list = [s.strip() for s in id_list_string.split(',') if s.strip()]
             if not id_list:
@@ -435,7 +435,12 @@ class ActFotoPianteResource(Resource):
                         print("Photo missing")
                         zip_file.writestr(f"{single_id}_missing.txt", f"Foto non trovata per ID {single_id}")
             
-            return {"message": "Restituire ID e foto delle piante indicate in un query parameter"}, 418
+            buffer.seek(0)
+            zip_bytes = buffer.getvalue()
+            headers = {"Content-Disposition": 'attachment; filename="photos.zip"'}
+
+            return Response(zip_bytes, mimetype="application/zip", headers=headers)
+            # return {"message": "Restituire ID e foto delle piante indicate in un query parameter"}, 418
             """ try:
 
                 page = request.args.get('page', default=1, type=int)
