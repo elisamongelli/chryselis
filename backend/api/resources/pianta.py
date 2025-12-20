@@ -396,11 +396,10 @@ class ActFotoPianteResource(Resource):
         
         # if ID does not exists, get all plants' photos
         if id is None:
+
+            id_list_string = request.args.get('filter', default="", type=str)
             
-            print("Check field with list of IDs")
-            id_list_string = "457cdace-7d89-43b6-963c-3a87c1cba52c,44de2a81-9b20-4b9a-b18e-4b97dfc697d1,4ef7d9fe-57ea-4255-ad99-3aff62c74bb8,00000000-0000-0000-0000-000000000000"
-            # id_list_string = "f7cd82b1-165c-48c4-8f1f-f42d5308141f,e800d543-359c-40ee-b61a-623e114ff404,32c70991-171a-4e85-b22b-cae08f9dc0cc,00000000-0000-0000-0000-000000000000"
-            
+            # make a list from IDs concatenation
             id_list = [s.strip() for s in id_list_string.split(',') if s.strip()]
             if not id_list:
                 return {"message": "E' necessario specificare gli ID delle piante"}, 400
@@ -408,85 +407,49 @@ class ActFotoPianteResource(Resource):
 
             try:
             
+                # get ID and photo from the plants whose IDs have been specified
                 piante = ActPianteTestataModel.query\
                     .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                     .with_entities(*photo_fields)\
                     .filter(ActPianteTestataModel.ID_PIANTA.in_(id_list))\
                     .all()
-                
-                # return many_piante_schema.dump(piante)
             
             except SQLAlchemyError:
                 return {"message": "Errore durante il recupero delle foto delle piante"}, 500
             
+
+            # create a map with plant's ID as key and the photo as value
             found_map = {pianta.ID_PIANTA: pianta.FOTO_PIANTA for pianta in piante}
 
+            # create a memory buffer to contain the zip file
             buffer = io.BytesIO()
+            # the with clause opens and automatically closes the resource
+            # it opens up the file on write mode and with deflated compression
             with zipfile.ZipFile(buffer, 'w', compression=zipfile.ZIP_DEFLATED) as zip_file:
                 for single_id in id_list:
-                    print("Single id: " + single_id)
                     foto = found_map.get(single_id)
                     if foto:
+                        # opens up the single image to get its format
                         extension = Image.open(io.BytesIO(foto)).format.lower()
-                        filename = f"{single_id}.{extension}"
-                        print("Photo exists: " + filename + "." + extension)
-                        zip_file.writestr(filename, foto)
+                        zip_file.writestr(f"{single_id}.{extension}", foto)
                     else:
-                        print("Photo missing")
                         zip_file.writestr(f"{single_id}_missing.txt", f"Foto non trovata per ID {single_id}")
             
+            # get the cursor to the beginning of the buffer to read it
             buffer.seek(0)
+            # get the bytes of the zip file
             zip_bytes = buffer.getvalue()
+            # download the file with photos.zip name
             headers = {"Content-Disposition": 'attachment; filename="photos.zip"'}
 
+
             return Response(zip_bytes, mimetype="application/zip", headers=headers)
-            # return {"message": "Restituire ID e foto delle piante indicate in un query parameter"}, 418
-            """ try:
-
-                page = request.args.get('page', default=1, type=int)
-                limit = request.args.get('limit', default=25, type=int)
-                orderBy = request.args.get('orderBy', default='DATA_ULTIMA_MODIFICA:desc', type=str)
-
-                if page < 1:
-                    return {"message": "La pagina deve essere un valore positivo"}, 400
-                if limit < 1 or limit > 100:
-                    return {"message": "Il limite deve essere compreso o uguale tra 1 e 100"}, 400
-                orderBy = orderBy.split(':')
-                
-
-                # query construction:
-                #   with_entities filters the query showing only the fields specified in the fields array
-                query = ActPianteTestataModel.query\
-                            .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                            .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                            .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
-                            .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO)\
-                            .join(LookupStanzeModel, LookupStanzeModel.ID_STANZA == ActPianteDettaglioModel.ID_STANZA)\
-                            .with_entities(*fields)\
-                            .order_by(fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else fields_map.get(orderBy[0]).asc())
-                
-                
-                pagination = query.paginate(page=page, per_page=limit, error_out=False)
-                piante = pagination.items
-                totalItems = pagination.total
-                totalPages = pagination.pages
-                hasMore = pagination.has_next
-                return {
-                    "piante": many_piante_schema.dump(piante),
-                    "count": len(piante),
-                    "hasMore": hasMore,
-                    "page": page,
-                    "limit": limit,
-                    "totalPages": totalPages,
-                    "totalItems": totalItems
-                }, 200
-            except SQLAlchemyError:
-                return {"message": "Errore durante il recupero delle piante"}, 500 """
+            
 
 
-        print("Check field with specified ID: " + id)
         # else if ID is not null, get the one plant corresponding to the ID
         try:
+
             # query construction:
             #   with_entities filters the query showing only the fields specified in the fields array (ID_PIANTA, FOTO_PIANTA)
             #   filter shows the only plant with the ID specified in the path
@@ -495,13 +458,7 @@ class ActFotoPianteResource(Resource):
                         .with_entities(*photo_fields)\
                         .filter(ActPianteTestataModel.ID_PIANTA == id)\
                         .first()
-            print("id pianta:" + pianta.ID_PIANTA)
-            """ foto_pianta = pianta.FOTO_PIANTA
-            return Response(foto_pianta, mimetype='application/octet-stream') """
-            """ foto_pianta_data = pianta.FOTO_PIANTA.read()
-            foto_pianta_byte_array = bytearray(foto_pianta_data)
-            encoded_data = base64.b64encode(bytes(foto_pianta_byte_array)).decode('utf-8')
-            print("foto pianta:" + encoded_data) """
+            
         except SQLAlchemyError:
             return {"message": "Errore durante il recupero della pianta"}, 500
         
@@ -509,6 +466,7 @@ class ActFotoPianteResource(Resource):
         # if the plant has been retrieve successfully from the DB, returnes its photo
         if pianta:
             foto_pianta = pianta.FOTO_PIANTA
+            extension = Image.open(io.BytesIO(foto_pianta)).format.lower()
             return Response(foto_pianta, mimetype='application/octet-stream')
 
         # else return 404 error, plant not found
