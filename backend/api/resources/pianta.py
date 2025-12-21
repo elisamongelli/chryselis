@@ -474,3 +474,8 @@ class ActFotoPianteResource(Resource):
 
         # else return 404 error, plant not found
         return {"message": "Pianta non trovata"}, 404
+    
+
+
+    def delete(self, id):
+        print("NEEDS TO BE IMPLEMENTED")
