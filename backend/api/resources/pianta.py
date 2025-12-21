@@ -467,7 +467,10 @@ class ActFotoPianteResource(Resource):
         if pianta:
             foto_pianta = pianta.FOTO_PIANTA
             extension = Image.open(io.BytesIO(foto_pianta)).format.lower()
-            return Response(foto_pianta, mimetype='application/octet-stream')
+            
+            headers = {"Content-Disposition": 'attachment; filename="' + pianta.ID_PIANTA + '.' + extension + '"'}
+            
+            return Response(foto_pianta, mimetype='image/' + extension, headers=headers)
 
         # else return 404 error, plant not found
         return {"message": "Pianta non trovata"}, 404
