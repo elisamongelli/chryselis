@@ -466,11 +466,15 @@ class ActFotoPianteResource(Resource):
         # if the plant has been retrieve successfully from the DB, returnes its photo
         if pianta:
             foto_pianta = pianta.FOTO_PIANTA
-            extension = Image.open(io.BytesIO(foto_pianta)).format.lower()
+
+            if foto_pianta:
+                extension = Image.open(io.BytesIO(foto_pianta)).format.lower()
+                headers = {"Content-Disposition": 'attachment; filename="' + pianta.ID_PIANTA + '.' + extension + '"'}
+                
+                return Response(foto_pianta, mimetype='image/' + extension, headers=headers)
             
-            headers = {"Content-Disposition": 'attachment; filename="' + pianta.ID_PIANTA + '.' + extension + '"'}
-            
-            return Response(foto_pianta, mimetype='image/' + extension, headers=headers)
+            else:
+                return {"message": "La pianta non ha una foto"}, 200
 
         # else return 404 error, plant not found
         return {"message": "Pianta non trovata"}, 404
@@ -478,4 +482,19 @@ class ActFotoPianteResource(Resource):
 
 
     def delete(self, id):
-        print("NEEDS TO BE IMPLEMENTED")
+
+        plant = ActPianteTestataModel.query.get(id)
+        plant_detail = ActPianteDettaglioModel.query.get(id)
+
+        if not plant:
+            return {"message": "Pianta non trovata"}, 404
+
+        # else delete the plant's photo from the DB
+        try:
+            plant.DATA_ULTIMA_MODIFICA = datetime.datetime.now()
+            plant_detail.FOTO_PIANTA = None
+            db.session.commit()
+            return {"message": "Foto eliminata"}, 204
+        except SQLAlchemyError:
+            db.session.rollback()
+            return {"message": "Errore durante l'eliminazione della foto della pianta"}, 500
