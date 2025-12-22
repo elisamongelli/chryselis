@@ -5,6 +5,7 @@ from api.resources.stato import LookupStatiResource
 from api.resources.programma import LookupProgrammiResource
 from api.resources.pianta_programma import LookupPianteProgrammiResource
 from api.resources.pianta import ActPianteResource, ActFotoPianteResource
+from api.resources.pianta_storico import ActPianteStoricoResource
 
 
 
@@ -22,3 +23,4 @@ api.add_resource(LookupPianteProgrammiResource, '/lookup/pianteProgrammi', '/loo
 # list the API resources and their corresponding routes - anagrafica
 api.add_resource(ActPianteResource, '/anagrafica/piante', '/anagrafica/piante/<string:id>')
 api.add_resource(ActFotoPianteResource, '/anagrafica/fotoPiante', '/anagrafica/fotoPiante/<string:id>')
+api.add_resource(ActPianteStoricoResource, '/anagrafica/storicoPiante', '/anagrafica/storicoPiante/<string:id>')
