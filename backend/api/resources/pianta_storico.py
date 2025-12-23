@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from marshmallow import ValidationError
 from api.models import db
 from api.models.pianta_storico import ActPianteStoricoModel
-from api.models.pianta import ActPianteTestataModel #, ActPianteDettaglioModel, ActPianteDettaglioSensoriModel
+from api.models.pianta import ActPianteTestataModel, ActPianteDettaglioSensoriModel #, ActPianteDettaglioModel
 from api.models.stato import LookupStatiModel
 from api.models.programma import LookupProgrammiModel
 from api.schemas.pianta_storico import ActPianteStoricoSchema
@@ -78,7 +78,19 @@ all_history_plant_fields = [ActPianteStoricoModel.ID_PIANTA,
                             ActPianteStoricoModel.ALTRO_DATO_SENSORI_2,
                             ActPianteStoricoModel.ALTRO_DATO_SENSORI_3,
                             ActPianteStoricoModel.ALTRO_DATO_SENSORI_4,
-                            ActPianteStoricoModel.DATA_MODIFICA,]
+                            ActPianteStoricoModel.DATA_MODIFICA]
+
+
+all_history_plant_fields_without_descriptive = [ActPianteTestataModel.ID_PIANTA,
+                                                ActPianteTestataModel.ID_STATO_PIANTA,
+                                                ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
+                                                ActPianteDettaglioSensoriModel.UMIDITA_CORRENTE,
+                                                ActPianteDettaglioSensoriModel.ACQUA_ULTIMA_INNAFFIATURA,
+                                                ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_1,
+                                                ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_2,
+                                                ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_3,
+                                                ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4,
+                                                ActPianteTestataModel.DATA_ULTIMA_MODIFICA]
 
 
 
@@ -189,10 +201,43 @@ class ActPianteStoricoResource(Resource):
     
 
 
-    # plant creation is implemented with multipart form-data
     def post(self):
 
-        # gets JSON payload with all fields except for the photo
+        plant_data = ActPianteTestataModel.query\
+                        .join(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
+                        .with_entities(*all_history_plant_fields_without_descriptive)\
+                        .filter(ActPianteTestataModel.ID_PIANTA == id)\
+                        .first()
+        
+        print("Plant ID = " + plant_data.ID_PIANTA + "\nPlant status = " + plant_data.ID_STATO_PIANTA)
+
+        """ # get JSON for REST API request body
+        data = request.get_json()
+
+        # create a new history plant record with request body's data
+        new_history_plant = ActPianteStoricoModel(
+            ID_PIANTA=data['ID_PIANTA'],
+            ID_STATO_PIANTA=data['ID_STATO_PIANTA'],
+            ID_PROGRAMMA_ESEGUITO=data['ID_PROGRAMMA_ESEGUITO'],
+            UMIDITA_CORRENTE=data['UMIDITA_CORRENTE'],
+            ACQUA_ULTIMA_INNAFFIATURA=data['ACQUA_ULTIMA_INNAFFIATURA'],
+            ALTRO_DATO_SENSORI_1=data['ALTRO_DATO_SENSORI_1'],
+            ALTRO_DATO_SENSORI_2=data['ALTRO_DATO_SENSORI_2'],
+            ALTRO_DATO_SENSORI_3=data['ALTRO_DATO_SENSORI_3'],
+            ALTRO_DATO_SENSORI_4=data['ALTRO_DATO_SENSORI_4'],
+            DATA_MODIFICA=data['DATA_MODIFICA']
+        )
+
+        try:
+            db.session.add(new_history_plant)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return {"message": "Errore durante la creazione dello storico della pianta"}, 500
+
+        return one_piante_storico_schema.dump(new_history_plant), 201 """
+
+        """ # gets JSON payload with all fields except for the photo
         try:
             data = request.form.get('payload')
             payload = json.loads(data)
@@ -246,7 +291,7 @@ class ActPianteStoricoResource(Resource):
                             .filter(ActPianteTestataModel.ID_PIANTA == nuova_pianta.ID_PIANTA)\
                             .first()
 
-        return one_piante_schema.dump(pianta_completa), 201
+        return one_piante_schema.dump(pianta_completa), 201 """
 
 
 
