@@ -64,6 +64,23 @@ photo_fields = [ActPianteTestataModel.ID_PIANTA,
                 ActPianteDettaglioModel.FOTO_PIANTA] """
 
 
+all_history_plant_fields = [ActPianteStoricoModel.ID_PIANTA,
+                            ActPianteStoricoModel.ID_STATO_PIANTA,
+                            LookupStatiModel.NOME_STATO.label('NOME_STATO'),
+                            LookupStatiModel.DESCRIZIONE_STATO.label('DESCRIZIONE_STATO'),
+                            ActPianteStoricoModel.ID_PROGRAMMA_ESEGUITO,
+                            LookupProgrammiModel.NOME_PROGRAMMA.label('NOME_PROGRAMMA'),
+                            LookupProgrammiModel.ORARIO_INIZIO_PROGRAMMA.label('ORARIO_INIZIO_PROGRAMMA'),
+                            LookupProgrammiModel.ORARIO_FINE_PROGRAMMA.label('ORARIO_FINE_PROGRAMMA'),
+                            ActPianteStoricoModel.UMIDITA_CORRENTE,
+                            ActPianteStoricoModel.ACQUA_ULTIMA_INNAFFIATURA,
+                            ActPianteStoricoModel.ALTRO_DATO_SENSORI_1,
+                            ActPianteStoricoModel.ALTRO_DATO_SENSORI_2,
+                            ActPianteStoricoModel.ALTRO_DATO_SENSORI_3,
+                            ActPianteStoricoModel.ALTRO_DATO_SENSORI_4,
+                            ActPianteStoricoModel.DATA_MODIFICA,]
+
+
 
 
 
@@ -126,8 +143,8 @@ class ActPianteStoricoResource(Resource):
                             .join(ActPianteTestataModel, ActPianteTestataModel.ID_PIANTA == ActPianteStoricoModel.ID_PIANTA)\
                             .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteStoricoModel.ID_STATO_PIANTA)\
                             .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteStoricoModel.ID_PROGRAMMA_ESEGUITO)\
+                            .with_entities(*all_history_plant_fields)\
                             .order_by(fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else fields_map.get(orderBy[0]).asc())
-                            # .with_entities(*fields)\
 
 
                 
@@ -157,9 +174,9 @@ class ActPianteStoricoResource(Resource):
                         .join(ActPianteTestataModel, ActPianteTestataModel.ID_PIANTA == ActPianteStoricoModel.ID_PIANTA)\
                         .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteStoricoModel.ID_STATO_PIANTA)\
                         .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteStoricoModel.ID_PROGRAMMA_ESEGUITO)\
+                        .with_entities(*all_history_plant_fields)\
                         .filter(ActPianteStoricoModel.ID_PIANTA == id)\
                         .first()
-                        # .with_entities(*fields)\
         except SQLAlchemyError:
             return {"message": "Errore durante il recupero dello storico della pianta"}, 500
 

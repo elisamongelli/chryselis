@@ -19,12 +19,9 @@ class ActPianteStoricoModel(db.Model):
     ALTRO_DATO_SENSORI_4 = db.Column(db.Numeric(5,2))
     DATA_MODIFICA = db.Column(db.DateTime)
 
-    print("Sono nel modello")
-
 
     # class constructor
     def __init__(self, ID_PIANTA, ID_STATO_PIANTA, ID_PROGRAMMA_ESEGUITO, UMIDITA_CORRENTE, ACQUA_ULTIMA_INNAFFIATURA, ALTRO_DATO_SENSORI_1, ALTRO_DATO_SENSORI_2, ALTRO_DATO_SENSORI_3, ALTRO_DATO_SENSORI_4, DATA_MODIFICA):
-        print("Sono nel costruttore del modello")
         # ID will be taken from the testata table
         self.ID_PIANTA = ID_PIANTA
         self.ID_STATO_PIANTA = ID_STATO_PIANTA
