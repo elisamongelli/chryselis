@@ -223,8 +223,6 @@ class ActPianteStoricoResource(Resource):
                         .filter(ActPianteTestataModel.ID_PIANTA == id_plant)\
                         .first()
         
-        print("Plant ID = " + plant_data.ID_PIANTA + "\nPlant status = " + plant_data.ID_STATO_PIANTA)
-
 
         try:
             if plant_data is not None:
@@ -250,126 +248,29 @@ class ActPianteStoricoResource(Resource):
 
 
 
-    def patch(self, id):
-        
-        # get the one plant from the DB with the corresponding ID
-        pianta = ActPianteTestataModel.query.get(id)
+    def delete(self, id=None):
 
-        # if the ID is not found in the DB, return 404 error, plant not found
-        if not pianta:
-            return {"message": "Pianta non trovata"}, 404
-        
+        # if plant ID is specified --> delete all records for that plant
+        # if startDate is specified --> delete all records from the startDate
+        # if endDate is specified --> delete all records until the endDate
 
-        # gets JSON payload with all fields to be updated except for the photo
-        payload=None
-        try:
-            data = request.form.get('payload')
-            if data is not None:
-                payload = json.loads(data)
-        except Exception as e:
-            return {"message": "Errore durante il recupero dei dati da salvare"}, 400
+        filter = request.args.get('filter', default=None, type=str)
+
+        print("Sono dopo il filter")
 
 
-        # gets the photos bytes from the file attachment in the multipart form-data request
-        bytes_foto = None
-        file_foto = request.files.get('image')
-        if file_foto:
-            try:
-                bytes_foto = file_foto.read()
-            except Exception as e:
-                return {"message": "Errore durante il recupero della foto da salvare"}, 400
+        if id is None:
+            query = ActPianteStoricoModel.query\
+                        .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
+                        .all()
+            print("Query effettuata")
 
-        
+            for plant in query:
+                print(plant.ID_PIANTA)
 
-        valid_data=None
-        try:
-            # load method returnes a dictionary with all valid fields
-            #   if a field has a wrong data type or does not exist on DB table, it throws a ValidationError
-            #   partial=True allows to get a JSON request with only a subset of fields
-            if payload is not None:
-                valid_data = one_piante_schema.load(payload, partial=True)
-        except ValidationError:
-            return {"message": "I valori inseriti per la modifica della pianta non sono validi"}, 400
-        
-        
-        # sets the allowed fields and updates only them on DB
-        allowed_fields = ['NOME_PIANTA',
-                          'DESCRIZIONE_PIANTA',
-                          'ID_STATO_PIANTA',
-                          'ID_STANZA',
-                          'POSIZIONE_STANZA_X',
-                          'POSIZIONE_STANZA_Y',
-                          'ID_ULTIMO_PROGRAMMA_ESEGUITO',
-                          'UMIDITA_CORRENTE',
-                          'ACQUA_ULTIMA_INNAFFIATURA',
-                          'ALTRO_DATO_SENSORI_1',
-                          'ALTRO_DATO_SENSORI_2',
-                          'ALTRO_DATO_SENSORI_3',
-                          'ALTRO_DATO_SENSORI_4']
-        # it scrolls the valid_data dictionary
-        #   key contains the header table's field or the table itself, like "dettaglio" and "dettaglio_sensori"
-        #   value contains the corresponding value or the json payload with all the fields of the current table
-        if valid_data is not None:
-            for key, value in valid_data.items():
-                # if current table is the header table, key is the specific field
-                if key in allowed_fields:
-                    setattr(pianta, key, value)
-                else:
-                    # gets the relationship between header plant and its details
-                    pianta_relationship = getattr(pianta, key)
-                    # when the key is "dettaglio_sensori" the relationship might not exist
-                    #   because it's not created during the plant creation
-                    if key == 'dettaglio_sensori' and pianta_relationship is None:
-                        try:
-                            # initializes the relationship between header plant and sensors details
-                            pianta_relationship = ActPianteDettaglioSensoriModel(
-                                ID_PIANTA=id,
-                                UMIDITA_CORRENTE=None,
-                                ACQUA_ULTIMA_INNAFFIATURA=None,
-                                ALTRO_DATO_SENSORI_1=None,
-                                ALTRO_DATO_SENSORI_2=None,
-                                ALTRO_DATO_SENSORI_3=None,
-                                ALTRO_DATO_SENSORI_4=None
-                            )
-                            pianta.dettaglio_sensori = pianta_relationship
-                            db.session.add(pianta_relationship)
-                        except SQLAlchemyError as e:
-                            db.session.rollback()
-                            return {"message": "Errore durante l'aggiornamento dei dati dei sensori"}, 500
-                    # it scrolls the json payload for the current table
-                    for t_key, t_value in value.items():
-                        # if the current field is allowed, it updates its value
-                        if t_key in allowed_fields:
-                            setattr(pianta_relationship, t_key, t_value)
-        
+        print("Sono fuori dall'if")
 
-        try:
-            if bytes_foto is not None:
-                pianta.dettaglio.FOTO_PIANTA = bytes_foto
-            pianta.DATA_ULTIMA_MODIFICA = datetime.datetime.now()
-            db.session.commit()
-        except SQLAlchemyError:
-            db.session.rollback()
-            return {"message": "Errore durante l'aggiornamento della pianta"}, 500
-        
-        # gets the updated plant
-        pianta_completa = ActPianteTestataModel.query\
-                            .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                            .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                            .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
-                            .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO)\
-                            .join(LookupStanzeModel, LookupStanzeModel.ID_STANZA == ActPianteDettaglioModel.ID_STANZA)\
-                            .with_entities(*all_plant_fields)\
-                            .filter(ActPianteTestataModel.ID_PIANTA == id)\
-                            .first()
-
-        return one_piante_schema.dump(pianta_completa), 200
-    
-
-
-    def delete(self, id):
-
-        # get the one plant from the DB with the corresponding ID
+        """ # get the one plant from the DB with the corresponding ID
         plant = ActPianteTestataModel.query.get(id)
         plant_detail = ActPianteDettaglioModel.query.get(id)
         plant_detail_sensors = ActPianteDettaglioSensoriModel.query.get(id)
@@ -388,4 +289,4 @@ class ActPianteStoricoResource(Resource):
             return {"message": "Pianta eliminata"}, 204
         except SQLAlchemyError:
             db.session.rollback()
-            return {"message": "Errore durante la cancellazione della pianta"}, 500
+            return {"message": "Errore durante la cancellazione della pianta"}, 500 """
