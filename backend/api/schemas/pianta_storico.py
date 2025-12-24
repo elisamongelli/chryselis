@@ -14,10 +14,10 @@ class ActPianteStoricoSchema(Schema):
     ORARIO_FINE_PROGRAMMA = fields.Time(attribute='programma.ORARIO_FINE_PROGRAMMA')
     UMIDITA_CORRENTE = fields.Int()
     ACQUA_ULTIMA_INNAFFIATURA = fields.Int()
-    ALTRO_DATO_SENSORI_1 = fields.Decimal()
-    ALTRO_DATO_SENSORI_2 = fields.Decimal()
-    ALTRO_DATO_SENSORI_3 = fields.Decimal()
-    ALTRO_DATO_SENSORI_4 = fields.Decimal()
+    ALTRO_DATO_SENSORI_1 = fields.Decimal(as_string=True, places=2)
+    ALTRO_DATO_SENSORI_2 = fields.Decimal(as_string=True, places=2)
+    ALTRO_DATO_SENSORI_3 = fields.Decimal(as_string=True, places=2)
+    ALTRO_DATO_SENSORI_4 = fields.Decimal(as_string=True, places=2)
     DATA_MODIFICA = fields.DateTime()
 
 
