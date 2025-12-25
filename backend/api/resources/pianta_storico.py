@@ -240,9 +240,9 @@ class ActPianteStoricoResource(Resource):
                 )
                 db.session.add(new_history_plant)
                 db.session.commit()
-        except SQLAlchemyError as e:
+        except SQLAlchemyError:
             db.session.rollback()
-            return {"message": "Errore durante la creazione dello storico della pianta" + str(e)}, 500
+            return {"message": "Errore durante la creazione dello storico della pianta"}, 500
 
         return one_piante_storico_schema.dump(plant_data), 201
 
@@ -254,39 +254,125 @@ class ActPianteStoricoResource(Resource):
         # if startDate is specified --> delete all records from the startDate
         # if endDate is specified --> delete all records until the endDate
 
-        filter = request.args.get('filter', default=None, type=str)
+        startDate = request.args.get('startDate', default=None, type=str)
+        endDate = request.args.get('endDate', default=None, type=str)
 
-        print("Sono dopo il filter")
 
+        plants = None
 
+        # get all plants without any ID filter
         if id is None:
-            query = ActPianteStoricoModel.query\
-                        .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
-                        .all()
-            print("Query effettuata")
 
-            for plant in query:
-                print(plant.ID_PIANTA)
 
-        print("Sono fuori dall'if")
+            if startDate is not None and endDate is not None:
 
-        """ # get the one plant from the DB with the corresponding ID
-        plant = ActPianteTestataModel.query.get(id)
-        plant_detail = ActPianteDettaglioModel.query.get(id)
-        plant_detail_sensors = ActPianteDettaglioSensoriModel.query.get(id)
+                try:
+                    # get all plants between start date and end date
+                    plants = ActPianteStoricoModel.query\
+                                .filter(ActPianteStoricoModel.DATA_MODIFICA >= datetime.datetime(int(startDate[:4]), int(startDate[5:7]), int(startDate[8:])))\
+                                .filter(ActPianteStoricoModel.DATA_MODIFICA <= datetime.datetime(int(endDate[:4]), int(endDate[5:7]), int(endDate[8:])))\
+                                .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
+                                .all()
+                except SQLAlchemyError:
+                    return {"message": "Errore durante il recupero dello storico delle piante da eliminare"}, 500
+            
 
-        # if the ID is not found in the DB, return 404 error, plant not found
-        if not plant:
-            return {"message": "Pianta non trovata"}, 404
+            elif startDate is not None and endDate is None:
 
-        # else delete the plant from the DB
-        try:
-            if plant_detail_sensors is not None:
-                db.session.delete(plant_detail_sensors)
-            db.session.delete(plant_detail)
-            db.session.delete(plant)
+                try:
+                    # get all plants after start date
+                    plants = ActPianteStoricoModel.query\
+                                .filter(ActPianteStoricoModel.DATA_MODIFICA >= datetime.datetime(int(startDate[:4]), int(startDate[5:7]), int(startDate[8:])))\
+                                .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
+                                .all()
+                except SQLAlchemyError:
+                    return {"message": "Errore durante il recupero dello storico delle piante da eliminare"}, 500
+            
+
+            elif startDate is None and endDate is not None:
+                try:
+                    # get all plants before end date
+                    plants = ActPianteStoricoModel.query\
+                                .filter(ActPianteStoricoModel.DATA_MODIFICA <= datetime.datetime(int(endDate[:4]), int(endDate[5:7]), int(endDate[8:])))\
+                                .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
+                                .all()
+                except SQLAlchemyError:
+                    return {"message": "Errore durante il recupero dello storico delle piante da eliminare"}, 500
+            
+
+            else:
+                try:
+                    # get all plants without any date filter
+                    plants = ActPianteStoricoModel.query\
+                                .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
+                                .all()
+                except SQLAlchemyError:
+                    return {"message": "Errore durante il recupero dello storico delle piante da eliminare"}, 500
+        
+
+
+        # get records for a specific plant
+        else:
+
+
+            if startDate is not None and endDate is not None:
+
+                try:
+                    # get records for plant between start date and end date
+                    plants = ActPianteStoricoModel.query\
+                                .filter(ActPianteStoricoModel.ID_PIANTA == id)\
+                                .filter(ActPianteStoricoModel.DATA_MODIFICA >= datetime.datetime(int(startDate[:4]), int(startDate[5:7]), int(startDate[8:])))\
+                                .filter(ActPianteStoricoModel.DATA_MODIFICA <= datetime.datetime(int(endDate[:4]), int(endDate[5:7]), int(endDate[8:])))\
+                                .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
+                                .all()
+                except SQLAlchemyError:
+                    return {"message": "Errore durante il recupero dello storico della pianta da eliminare"}, 500
+            
+
+            elif startDate is not None and endDate is None:
+
+                try:
+                    # get records for plant after start date
+                    plants = ActPianteStoricoModel.query\
+                                .filter(ActPianteStoricoModel.ID_PIANTA == id)\
+                                .filter(ActPianteStoricoModel.DATA_MODIFICA >= datetime.datetime(int(startDate[:4]), int(startDate[5:7]), int(startDate[8:])))\
+                                .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
+                                .all()
+                except SQLAlchemyError:
+                    return {"message": "Errore durante il recupero dello storico della pianta da eliminare"}, 500
+            
+
+            elif startDate is None and endDate is not None:
+                try:
+                    # get records for plant before end date
+                    plants = ActPianteStoricoModel.query\
+                                .filter(ActPianteStoricoModel.ID_PIANTA == id)\
+                                .filter(ActPianteStoricoModel.DATA_MODIFICA <= datetime.datetime(int(endDate[:4]), int(endDate[5:7]), int(endDate[8:])))\
+                                .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
+                                .all()
+                except SQLAlchemyError:
+                    return {"message": "Errore durante il recupero dello storico della pianta da eliminare"}, 500
+            
+
+            else:
+                try:
+                    # get records for plant without any date filter
+                    plants = ActPianteStoricoModel.query\
+                                .filter(ActPianteStoricoModel.ID_PIANTA == id)\
+                                .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
+                                .all()
+                except SQLAlchemyError:
+                    return {"message": "Errore durante il recupero dello storico della pianta da eliminare"}, 500
+
+
+
+        for plant in plants:
+            print(plant.ID_PIANTA)
+
+        """ try:
+            db.session.delete(plants)
             db.session.commit()
-            return {"message": "Pianta eliminata"}, 204
+            return {"message": "Storico delle piante eliminate"}, 204
         except SQLAlchemyError:
             db.session.rollback()
-            return {"message": "Errore durante la cancellazione della pianta"}, 500 """
+            return {"message": "Errore durante la cancellazione dello storico delle piante"}, 500 """
