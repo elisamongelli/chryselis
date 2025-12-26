@@ -17,7 +17,7 @@ class ActPianteStoricoModel(db.Model):
     ALTRO_DATO_SENSORI_2 = db.Column(db.Numeric(5,2))
     ALTRO_DATO_SENSORI_3 = db.Column(db.Numeric(5,2))
     ALTRO_DATO_SENSORI_4 = db.Column(db.Numeric(5,2))
-    DATA_MODIFICA = db.Column(db.DateTime)
+    DATA_MODIFICA = db.Column(db.DateTime, primary_key=True)
 
 
     # class constructor

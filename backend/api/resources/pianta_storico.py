@@ -1,11 +1,10 @@
-import json, datetime
+import datetime
 from flask import request
 from flask_restful import Resource
 from sqlalchemy.exc import SQLAlchemyError
-from marshmallow import ValidationError
 from api.models import db
 from api.models.pianta_storico import ActPianteStoricoModel
-from api.models.pianta import ActPianteTestataModel, ActPianteDettaglioSensoriModel #, ActPianteDettaglioModel
+from api.models.pianta import ActPianteTestataModel, ActPianteDettaglioSensoriModel
 from api.models.stato import LookupStatiModel
 from api.models.programma import LookupProgrammiModel
 from api.schemas.pianta_storico import ActPianteStoricoSchema
@@ -16,52 +15,6 @@ from api.schemas.pianta_storico import ActPianteStoricoSchema
 many_piante_storico_schema = ActPianteStoricoSchema(many=True)
 one_piante_storico_schema = ActPianteStoricoSchema()
 
-
-
-""" all_plant_fields_without_sensors = [ActPianteTestataModel.ID_PIANTA,
-                                    ActPianteTestataModel.ID_STATO_PIANTA,
-                                    LookupStatiModel.NOME_STATO.label('NOME_STATO'),
-                                    LookupStatiModel.DESCRIZIONE_STATO.label('DESCRIZIONE_STATO'),
-                                    ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
-                                    LookupProgrammiModel.NOME_PROGRAMMA.label('NOME_PROGRAMMA'),
-                                    LookupProgrammiModel.ORARIO_INIZIO_PROGRAMMA.label('ORARIO_INIZIO_PROGRAMMA'),
-                                    LookupProgrammiModel.ORARIO_FINE_PROGRAMMA.label('ORARIO_FINE_PROGRAMMA'),
-                                    ActPianteTestataModel.DATA_INSERIMENTO,
-                                    ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
-                                    ActPianteDettaglioModel.NOME_PIANTA,
-                                    ActPianteDettaglioModel.DESCRIZIONE_PIANTA,
-                                    ActPianteDettaglioModel.ID_STANZA,
-                                    LookupStanzeModel.NOME_STANZA.label('NOME_STANZA'),
-                                    ActPianteDettaglioModel.POSIZIONE_STANZA_X,
-                                    ActPianteDettaglioModel.POSIZIONE_STANZA_Y]
-
-
-all_plant_fields = [ActPianteTestataModel.ID_PIANTA,
-                    ActPianteTestataModel.ID_STATO_PIANTA,
-                    LookupStatiModel.NOME_STATO.label('NOME_STATO'),
-                    LookupStatiModel.DESCRIZIONE_STATO.label('DESCRIZIONE_STATO'),
-                    ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
-                    LookupProgrammiModel.NOME_PROGRAMMA.label('NOME_PROGRAMMA'),
-                    LookupProgrammiModel.ORARIO_INIZIO_PROGRAMMA.label('ORARIO_INIZIO_PROGRAMMA'),
-                    LookupProgrammiModel.ORARIO_FINE_PROGRAMMA.label('ORARIO_FINE_PROGRAMMA'),
-                    ActPianteTestataModel.DATA_INSERIMENTO,
-                    ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
-                    ActPianteDettaglioModel.NOME_PIANTA,
-                    ActPianteDettaglioModel.DESCRIZIONE_PIANTA,
-                    ActPianteDettaglioModel.ID_STANZA,
-                    LookupStanzeModel.NOME_STANZA.label('NOME_STANZA'),
-                    ActPianteDettaglioModel.POSIZIONE_STANZA_X,
-                    ActPianteDettaglioModel.POSIZIONE_STANZA_Y,
-                    ActPianteDettaglioSensoriModel.UMIDITA_CORRENTE,
-                    ActPianteDettaglioSensoriModel.ACQUA_ULTIMA_INNAFFIATURA,
-                    ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_1,
-                    ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_2,
-                    ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_3,
-                    ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4]
-
-
-photo_fields = [ActPianteTestataModel.ID_PIANTA,
-                ActPianteDettaglioModel.FOTO_PIANTA] """
 
 
 all_history_plant_fields = [ActPianteStoricoModel.ID_PIANTA,
@@ -120,17 +73,7 @@ class ActPianteStoricoResource(Resource):
             'ALTRO_DATO_SENSORI_4' : ActPianteStoricoModel.ALTRO_DATO_SENSORI_4,
             'DATA_MODIFICA' : ActPianteStoricoModel.DATA_MODIFICA
         }
-        
-        
-        """ # fields to return can be chosen both if ID is None or populated
-        fields = request.args.get('fields', default=None, type=str)
 
-        if fields is None:
-            fields = all_plant_fields
-        else:
-            # gets the fields list in the REST API invoke and associates them with the ones in the map
-            fields = [field.strip() for field in fields.split(',') if field.strip()]
-            fields = [fields_map[name].label(name) for name in fields if name in fields_map] """
 
 
         page = request.args.get('page', default=1, type=int)
@@ -210,17 +153,15 @@ class ActPianteStoricoResource(Resource):
     
 
 
-    def post(self):
+    def post(self, id):
 
-        id_plant = request.args.get('filter', default=None, type=str)
-
-        if id_plant is None:
+        if id is None:
             return {"message": "Il valore corrispondente all'ID della pianta non è specificato"}, 400
 
         plant_data = ActPianteTestataModel.query\
                         .join(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                         .with_entities(*all_history_plant_fields_without_descriptive)\
-                        .filter(ActPianteTestataModel.ID_PIANTA == id_plant)\
+                        .filter(ActPianteTestataModel.ID_PIANTA == id)\
                         .first()
         
 
@@ -257,6 +198,12 @@ class ActPianteStoricoResource(Resource):
         startDate = request.args.get('startDate', default=None, type=str)
         endDate = request.args.get('endDate', default=None, type=str)
 
+        # checks if start date is after the end date
+        if startDate is not None and endDate is not None:
+            if (datetime.datetime.strptime(startDate, '%Y-%m-%d') > datetime.datetime.strptime(endDate, '%Y-%m-%d')):
+                return {"message": "La data di inizio deve essere precedente alla data di fine"}, 500
+
+
 
         plants = None
 
@@ -269,11 +216,11 @@ class ActPianteStoricoResource(Resource):
                 try:
                     # get all plants between start date and end date
                     plants = ActPianteStoricoModel.query\
-                                .filter(ActPianteStoricoModel.DATA_MODIFICA >= datetime.datetime(int(startDate[:4]), int(startDate[5:7]), int(startDate[8:])))\
-                                .filter(ActPianteStoricoModel.DATA_MODIFICA <= datetime.datetime(int(endDate[:4]), int(endDate[5:7]), int(endDate[8:])))\
+                                .filter(ActPianteStoricoModel.DATA_MODIFICA >= datetime.datetime.strptime(startDate, '%Y-%m-%d'))\
+                                .filter(ActPianteStoricoModel.DATA_MODIFICA < datetime.datetime.strptime(endDate, '%Y-%m-%d') + datetime.timedelta(days=1))\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
-                except SQLAlchemyError:
+                except:
                     return {"message": "Errore durante il recupero dello storico delle piante da eliminare"}, 500
             
 
@@ -282,10 +229,10 @@ class ActPianteStoricoResource(Resource):
                 try:
                     # get all plants after start date
                     plants = ActPianteStoricoModel.query\
-                                .filter(ActPianteStoricoModel.DATA_MODIFICA >= datetime.datetime(int(startDate[:4]), int(startDate[5:7]), int(startDate[8:])))\
+                                .filter(ActPianteStoricoModel.DATA_MODIFICA >= datetime.datetime.strptime(startDate, '%Y-%m-%d'))\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
-                except SQLAlchemyError:
+                except:
                     return {"message": "Errore durante il recupero dello storico delle piante da eliminare"}, 500
             
 
@@ -293,10 +240,10 @@ class ActPianteStoricoResource(Resource):
                 try:
                     # get all plants before end date
                     plants = ActPianteStoricoModel.query\
-                                .filter(ActPianteStoricoModel.DATA_MODIFICA <= datetime.datetime(int(endDate[:4]), int(endDate[5:7]), int(endDate[8:])))\
+                                .filter(ActPianteStoricoModel.DATA_MODIFICA < datetime.datetime.strptime(endDate, '%Y-%m-%d') + datetime.timedelta(days=1))\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
-                except SQLAlchemyError:
+                except:
                     return {"message": "Errore durante il recupero dello storico delle piante da eliminare"}, 500
             
 
@@ -306,7 +253,7 @@ class ActPianteStoricoResource(Resource):
                     plants = ActPianteStoricoModel.query\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
-                except SQLAlchemyError:
+                except:
                     return {"message": "Errore durante il recupero dello storico delle piante da eliminare"}, 500
         
 
@@ -321,11 +268,11 @@ class ActPianteStoricoResource(Resource):
                     # get records for plant between start date and end date
                     plants = ActPianteStoricoModel.query\
                                 .filter(ActPianteStoricoModel.ID_PIANTA == id)\
-                                .filter(ActPianteStoricoModel.DATA_MODIFICA >= datetime.datetime(int(startDate[:4]), int(startDate[5:7]), int(startDate[8:])))\
-                                .filter(ActPianteStoricoModel.DATA_MODIFICA <= datetime.datetime(int(endDate[:4]), int(endDate[5:7]), int(endDate[8:])))\
+                                .filter(ActPianteStoricoModel.DATA_MODIFICA >= datetime.datetime.strptime(startDate, '%Y-%m-%d'))\
+                                .filter(ActPianteStoricoModel.DATA_MODIFICA < datetime.datetime.strptime(endDate, '%Y-%m-%d') + datetime.timedelta(days=1))\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
-                except SQLAlchemyError:
+                except:
                     return {"message": "Errore durante il recupero dello storico della pianta da eliminare"}, 500
             
 
@@ -335,10 +282,10 @@ class ActPianteStoricoResource(Resource):
                     # get records for plant after start date
                     plants = ActPianteStoricoModel.query\
                                 .filter(ActPianteStoricoModel.ID_PIANTA == id)\
-                                .filter(ActPianteStoricoModel.DATA_MODIFICA >= datetime.datetime(int(startDate[:4]), int(startDate[5:7]), int(startDate[8:])))\
+                                .filter(ActPianteStoricoModel.DATA_MODIFICA >= datetime.datetime.strptime(startDate, '%Y-%m-%d'))\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
-                except SQLAlchemyError:
+                except:
                     return {"message": "Errore durante il recupero dello storico della pianta da eliminare"}, 500
             
 
@@ -347,10 +294,10 @@ class ActPianteStoricoResource(Resource):
                     # get records for plant before end date
                     plants = ActPianteStoricoModel.query\
                                 .filter(ActPianteStoricoModel.ID_PIANTA == id)\
-                                .filter(ActPianteStoricoModel.DATA_MODIFICA <= datetime.datetime(int(endDate[:4]), int(endDate[5:7]), int(endDate[8:])))\
+                                .filter(ActPianteStoricoModel.DATA_MODIFICA < datetime.datetime.strptime(endDate, '%Y-%m-%d') + datetime.timedelta(days=1))\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
-                except SQLAlchemyError:
+                except:
                     return {"message": "Errore durante il recupero dello storico della pianta da eliminare"}, 500
             
 
@@ -361,18 +308,16 @@ class ActPianteStoricoResource(Resource):
                                 .filter(ActPianteStoricoModel.ID_PIANTA == id)\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
-                except SQLAlchemyError:
+                except:
                     return {"message": "Errore durante il recupero dello storico della pianta da eliminare"}, 500
 
 
 
-        for plant in plants:
-            print(plant.ID_PIANTA)
-
-        """ try:
-            db.session.delete(plants)
+        try:
+            for plant in plants:
+                db.session.delete(plant)
             db.session.commit()
             return {"message": "Storico delle piante eliminate"}, 204
         except SQLAlchemyError:
             db.session.rollback()
-            return {"message": "Errore durante la cancellazione dello storico delle piante"}, 500 """
+            return {"message": "Errore durante la cancellazione dello storico delle piante"}, 500
