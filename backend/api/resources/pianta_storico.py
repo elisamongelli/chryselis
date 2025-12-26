@@ -12,8 +12,8 @@ from api.schemas.pianta_storico import ActPianteStoricoSchema
 
 
 
-many_piante_storico_schema = ActPianteStoricoSchema(many=True)
-one_piante_storico_schema = ActPianteStoricoSchema()
+many_plants_history_schema = ActPianteStoricoSchema(many=True)
+one_plant_history_schema = ActPianteStoricoSchema()
 
 
 
@@ -52,10 +52,10 @@ all_history_plant_fields_without_descriptive = [ActPianteTestataModel.ID_PIANTA,
 class ActPianteStoricoResource(Resource):
 
 
-    def get(self, id=None):
+    def get(self, plantID=None):
 
 
-        # the map helps the fields attribute during REST API invoke to not write the model for each field
+        # the map helps the fields attribute to not write the model for each field during REST API invokes
         fields_map = {
             'ID_PIANTA' : ActPianteStoricoModel.ID_PIANTA,
             'ID_STATO_PIANTA' : ActPianteStoricoModel.ID_STATO_PIANTA,
@@ -88,28 +88,28 @@ class ActPianteStoricoResource(Resource):
 
 
         # if ID does not exists, get all history plants
-        if id is None:
+        if plantID is None:
 
             try:
                 
                 # query construction:
-                #   with_entities filters the query showing only the fields specified in the fields array
-                query = ActPianteStoricoModel.query\
-                            .join(ActPianteTestataModel, ActPianteTestataModel.ID_PIANTA == ActPianteStoricoModel.ID_PIANTA)\
-                            .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteStoricoModel.ID_STATO_PIANTA)\
-                            .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteStoricoModel.ID_PROGRAMMA_ESEGUITO)\
-                            .with_entities(*all_history_plant_fields)\
-                            .order_by(fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else fields_map.get(orderBy[0]).asc())
+                #   with_entities filters the query showing only the fields specified in the all_history_plant_fields array
+                plantsHistory = ActPianteStoricoModel.query\
+                                    .join(ActPianteTestataModel, ActPianteTestataModel.ID_PIANTA == ActPianteStoricoModel.ID_PIANTA)\
+                                    .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteStoricoModel.ID_STATO_PIANTA)\
+                                    .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteStoricoModel.ID_PROGRAMMA_ESEGUITO)\
+                                    .with_entities(*all_history_plant_fields)\
+                                    .order_by(fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else fields_map.get(orderBy[0]).asc())
 
 
                 
-                pagination = query.paginate(page=page, per_page=limit, error_out=False)
+                pagination = plantsHistory.paginate(page=page, per_page=limit, error_out=False)
                 piante = pagination.items
                 totalItems = pagination.total
                 totalPages = pagination.pages
                 hasMore = pagination.has_next
                 return {
-                    "piante": many_piante_storico_schema.dump(piante),
+                    "piante": many_plants_history_schema.dump(piante),
                     "count": len(piante),
                     "hasMore": hasMore,
                     "page": page,
@@ -120,27 +120,28 @@ class ActPianteStoricoResource(Resource):
             except SQLAlchemyError:
                 return {"message": "Errore durante il recupero dello storico delle piante"}, 500
         
-        # else if ID is not null, get the one plant corresponding to the ID
+
+        # else if ID is not null, get history of the one plant corresponding to the ID
         try:
             # query construction:
-            #   with_entities filters the query showing only the fields specified in the fields array
+            #   with_entities filters the query showing only the fields specified in the all_history_plant_fields array
             #   filter shows the only plant with the ID specified in the path
-            query = ActPianteStoricoModel.query\
-                        .join(ActPianteTestataModel, ActPianteTestataModel.ID_PIANTA == ActPianteStoricoModel.ID_PIANTA)\
-                        .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteStoricoModel.ID_STATO_PIANTA)\
-                        .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteStoricoModel.ID_PROGRAMMA_ESEGUITO)\
-                        .with_entities(*all_history_plant_fields)\
-                        .filter(ActPianteStoricoModel.ID_PIANTA == id)\
-                        .order_by(fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else fields_map.get(orderBy[0]).asc())
+            plantsHistory = ActPianteStoricoModel.query\
+                                .join(ActPianteTestataModel, ActPianteTestataModel.ID_PIANTA == ActPianteStoricoModel.ID_PIANTA)\
+                                .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteStoricoModel.ID_STATO_PIANTA)\
+                                .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteStoricoModel.ID_PROGRAMMA_ESEGUITO)\
+                                .with_entities(*all_history_plant_fields)\
+                                .filter(ActPianteStoricoModel.ID_PIANTA == plantID)\
+                                .order_by(fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else fields_map.get(orderBy[0]).asc())
             
 
-            pagination = query.paginate(page=page, per_page=limit, error_out=False)
+            pagination = plantsHistory.paginate(page=page, per_page=limit, error_out=False)
             piante = pagination.items
             totalItems = pagination.total
             totalPages = pagination.pages
             hasMore = pagination.has_next
             return {
-                "piante": many_piante_storico_schema.dump(piante),
+                "piante": many_plants_history_schema.dump(piante),
                 "count": len(piante),
                 "hasMore": hasMore,
                 "page": page,
@@ -153,52 +154,57 @@ class ActPianteStoricoResource(Resource):
     
 
 
-    def post(self, id):
+    def post(self, plantID):
 
-        if id is None:
+        if plantID is None:
             return {"message": "Il valore corrispondente all'ID della pianta non è specificato"}, 400
 
-        plant_data = ActPianteTestataModel.query\
-                        .join(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                        .with_entities(*all_history_plant_fields_without_descriptive)\
-                        .filter(ActPianteTestataModel.ID_PIANTA == id)\
-                        .first()
+        
+        # get all existing information about the specified plant
+        #   join, instead of a left join, allows to not get the plant if no sensors details exist
+        plant = ActPianteTestataModel.query\
+                    .join(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
+                    .with_entities(*all_history_plant_fields_without_descriptive)\
+                    .filter(ActPianteTestataModel.ID_PIANTA == plantID)\
+                    .first()
         
 
         try:
-            if plant_data is not None:
-                new_history_plant = ActPianteStoricoModel(
-                    ID_PIANTA=plant_data.ID_PIANTA,
-                    ID_STATO_PIANTA=plant_data.ID_STATO_PIANTA,
-                    ID_PROGRAMMA_ESEGUITO=plant_data.ID_PROGRAMMA_ESEGUITO,
-                    UMIDITA_CORRENTE=plant_data.UMIDITA_CORRENTE,
-                    ACQUA_ULTIMA_INNAFFIATURA=plant_data.ACQUA_ULTIMA_INNAFFIATURA,
-                    ALTRO_DATO_SENSORI_1=plant_data.ALTRO_DATO_SENSORI_1,
-                    ALTRO_DATO_SENSORI_2=plant_data.ALTRO_DATO_SENSORI_2,
-                    ALTRO_DATO_SENSORI_3=plant_data.ALTRO_DATO_SENSORI_3,
-                    ALTRO_DATO_SENSORI_4=plant_data.ALTRO_DATO_SENSORI_4,
-                    DATA_MODIFICA=plant_data.DATA_MODIFICA
+            if plant is not None:
+                newPlantHistory = ActPianteStoricoModel(
+                    ID_PIANTA=plant.ID_PIANTA,
+                    ID_STATO_PIANTA=plant.ID_STATO_PIANTA,
+                    ID_PROGRAMMA_ESEGUITO=plant.ID_PROGRAMMA_ESEGUITO,
+                    UMIDITA_CORRENTE=plant.UMIDITA_CORRENTE,
+                    ACQUA_ULTIMA_INNAFFIATURA=plant.ACQUA_ULTIMA_INNAFFIATURA,
+                    ALTRO_DATO_SENSORI_1=plant.ALTRO_DATO_SENSORI_1,
+                    ALTRO_DATO_SENSORI_2=plant.ALTRO_DATO_SENSORI_2,
+                    ALTRO_DATO_SENSORI_3=plant.ALTRO_DATO_SENSORI_3,
+                    ALTRO_DATO_SENSORI_4=plant.ALTRO_DATO_SENSORI_4,
+                    DATA_MODIFICA=plant.DATA_MODIFICA
                 )
-                db.session.add(new_history_plant)
+                db.session.add(newPlantHistory)
                 db.session.commit()
         except SQLAlchemyError:
             db.session.rollback()
             return {"message": "Errore durante la creazione dello storico della pianta"}, 500
 
-        return one_piante_storico_schema.dump(plant_data), 201
+        return one_plant_history_schema.dump(plant), 201
 
 
 
-    def delete(self, id=None):
+    def patch(self, plantID=None):
 
-        # if plant ID is specified --> delete all records for that plant
-        # if startDate is specified --> delete all records from the startDate
-        # if endDate is specified --> delete all records until the endDate
+        return {"message": "Non è possibile modificare lo storico delle piante"}, 500
+
+
+
+    def delete(self, plantID=None):
 
         startDate = request.args.get('startDate', default=None, type=str)
         endDate = request.args.get('endDate', default=None, type=str)
 
-        # checks if start date is after the end date
+        # check if start date is after the end date
         if startDate is not None and endDate is not None:
             if (datetime.datetime.strptime(startDate, '%Y-%m-%d') > datetime.datetime.strptime(endDate, '%Y-%m-%d')):
                 return {"message": "La data di inizio deve essere precedente alla data di fine"}, 500
@@ -208,7 +214,7 @@ class ActPianteStoricoResource(Resource):
         plants = None
 
         # get all plants without any ID filter
-        if id is None:
+        if plantID is None:
 
 
             if startDate is not None and endDate is not None:
@@ -267,7 +273,7 @@ class ActPianteStoricoResource(Resource):
                 try:
                     # get records for plant between start date and end date
                     plants = ActPianteStoricoModel.query\
-                                .filter(ActPianteStoricoModel.ID_PIANTA == id)\
+                                .filter(ActPianteStoricoModel.ID_PIANTA == plantID)\
                                 .filter(ActPianteStoricoModel.DATA_MODIFICA >= datetime.datetime.strptime(startDate, '%Y-%m-%d'))\
                                 .filter(ActPianteStoricoModel.DATA_MODIFICA < datetime.datetime.strptime(endDate, '%Y-%m-%d') + datetime.timedelta(days=1))\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
@@ -281,7 +287,7 @@ class ActPianteStoricoResource(Resource):
                 try:
                     # get records for plant after start date
                     plants = ActPianteStoricoModel.query\
-                                .filter(ActPianteStoricoModel.ID_PIANTA == id)\
+                                .filter(ActPianteStoricoModel.ID_PIANTA == plantID)\
                                 .filter(ActPianteStoricoModel.DATA_MODIFICA >= datetime.datetime.strptime(startDate, '%Y-%m-%d'))\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
@@ -293,7 +299,7 @@ class ActPianteStoricoResource(Resource):
                 try:
                     # get records for plant before end date
                     plants = ActPianteStoricoModel.query\
-                                .filter(ActPianteStoricoModel.ID_PIANTA == id)\
+                                .filter(ActPianteStoricoModel.ID_PIANTA == plantID)\
                                 .filter(ActPianteStoricoModel.DATA_MODIFICA < datetime.datetime.strptime(endDate, '%Y-%m-%d') + datetime.timedelta(days=1))\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
@@ -305,7 +311,7 @@ class ActPianteStoricoResource(Resource):
                 try:
                     # get records for plant without any date filter
                     plants = ActPianteStoricoModel.query\
-                                .filter(ActPianteStoricoModel.ID_PIANTA == id)\
+                                .filter(ActPianteStoricoModel.ID_PIANTA == plantID)\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
                 except:
