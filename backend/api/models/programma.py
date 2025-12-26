@@ -8,7 +8,7 @@ class LookupProgrammiModel(db.Model):
     # specify the DB table name
     __tablename__ = 'lkp_programmi'
 
-    # lists all DB table columns
+    # list all DB table columns
     ID_PROGRAMMA = db.Column(db.String(100), primary_key=True)
     VALORE_SEQUENZA_TEMPORALE_PROGRAMMA = db.Column(db.Integer)
     NOME_PROGRAMMA = db.Column(db.String(500))

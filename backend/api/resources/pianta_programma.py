@@ -1,7 +1,6 @@
 from flask_restful import Resource
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError
-from marshmallow import ValidationError
 from api.models.pianta_programma import LookupPianteProgrammiModel
 from api.models import db
 from api.schemas.pianta_programma import LookupPianteProgrammiSchema
@@ -26,12 +25,15 @@ class LookupPianteProgrammiResource(Resource):
         if limit < 1 or limit > 100:
             return {"message": "Il limite deve essere compreso o uguale tra 1 e 100"}, 400
         
-        query = LookupPianteProgrammiModel.query.order_by(LookupPianteProgrammiModel.ID_PIANTA)
 
-        # if plant ID and schedule ID do not exist, get all plants-schedules association
+        plantSchedule = LookupPianteProgrammiModel.query\
+                            .order_by(LookupPianteProgrammiModel.ID_PIANTA)
+
+
+        # if plant ID and schedule ID do not exist, get all plant-schedule association
         if idPianta is None and idProgramma is None:
             try:
-                pagination = query.paginate(page=page, per_page=limit, error_out=False)
+                pagination = plantSchedule.paginate(page=page, per_page=limit, error_out=False)
                 pianteProgrammi = pagination.items
                 totalItems = pagination.total
                 totalPages = pagination.pages
@@ -48,10 +50,10 @@ class LookupPianteProgrammiResource(Resource):
             except SQLAlchemyError:
                 return {"message": "Errore durante il recupero dell'associazione tra le piante e i programmi"}, 500
         
-        # else if plant ID is not null and schedule ID is null, get all plants-schedules association for the plant ID
+        # else if plant ID is not null and schedule ID is null, get all plant-schedule association for the plant ID
         if idPianta is not None and idProgramma is None:
             try:
-                pagination = query.paginate(page=page, per_page=limit, error_out=False)
+                pagination = plantSchedule.paginate(page=page, per_page=limit, error_out=False)
                 pianteProgrammi = LookupPianteProgrammiModel.query.filter(LookupPianteProgrammiModel.ID_PIANTA == idPianta).all()
                 totalItems = pagination.total
                 totalPages = pagination.pages
@@ -68,10 +70,10 @@ class LookupPianteProgrammiResource(Resource):
             except SQLAlchemyError:
                 return {"message": "Errore durante il recupero dell'associazione tra le piante e i programmi"}, 500
         
-        # else if plant ID is null and schedule ID is not null, get all plants-schedules association for the schedule ID
+        # else if plant ID is null and schedule ID is not null, get all plant-schedule association for the schedule ID
         if idPianta is None and idProgramma is not None:
             try:
-                pagination = query.paginate(page=page, per_page=limit, error_out=False)
+                pagination = plantSchedule.paginate(page=page, per_page=limit, error_out=False)
                 pianteProgrammi = LookupPianteProgrammiModel.query.filter(LookupPianteProgrammiModel.ID_PROGRAMMA == idProgramma).all()
                 totalItems = pagination.total
                 totalPages = pagination.pages
@@ -88,18 +90,17 @@ class LookupPianteProgrammiResource(Resource):
             except SQLAlchemyError:
                 return {"message": "Errore durante il recupero dell'associazione tra le piante e i programmi"}, 500
         
-        # else if plant ID is not null and schedule ID is not null, get the one plants-schedules association corresponding to the IDs
+        # else if plant ID is not null and schedule ID is not null, get the one plant-schedule association corresponding to the IDs
         try:
-            print("id pianta = " + idPianta + "; id programma = " + idProgramma)
             piantaProgramma = LookupPianteProgrammiModel.query.filter(LookupPianteProgrammiModel.ID_PIANTA == idPianta, LookupPianteProgrammiModel.ID_PROGRAMMA == idProgramma).first()
         except SQLAlchemyError:
             return {"message": "Errore durante il recupero dell'associazione tra le piante e i programmi"}, 500
 
-        # if the plants-schedules association has been retrieve successfully from the DB
+        # if the plant-schedule association has been retrieve successfully from the DB
         if piantaProgramma:
             return one_piante_programma_schema.dump(piantaProgramma), 200
 
-        # else return 404 error, plants-schedules association not found
+        # else return 404 error, plant-schedule association not found
         return {"message": "Associazione tra le piante e i programmi non trovato"}, 404
     
 
@@ -109,7 +110,7 @@ class LookupPianteProgrammiResource(Resource):
         # get JSON for REST API request body
         data = request.get_json()
 
-        # create a new plants-schedules association with request body's data
+        # create a new plant-schedule association with request body's data
         nuovo_pianta_programma = LookupPianteProgrammiModel(
             ID_PIANTA=data['ID_PIANTA'],
             ID_PROGRAMMA=data['ID_PROGRAMMA']
@@ -134,14 +135,14 @@ class LookupPianteProgrammiResource(Resource):
 
     def delete(self, idPianta, idProgramma):
 
-        # get the one plants-schedules association from the DB with the corresponding ID
+        # get the one plant-schedule association from the DB with the corresponding ID
         piantaProgramma = LookupPianteProgrammiModel.query.filter(LookupPianteProgrammiModel.ID_PIANTA == idPianta, LookupPianteProgrammiModel.ID_PROGRAMMA == idProgramma).first()
 
-        # if the ID is not found in the DB, return 404 error, plants-schedules association not found
+        # if the ID is not found in the DB, return 404 error, plant-schedule association not found
         if not piantaProgramma:
             return {"message": "Associazione tra le piante e i programmi non trovata"}, 404
 
-        # else delete the plants-schedules association from the DB
+        # else delete the plant-schedule association from the DB
         try:
             db.session.delete(piantaProgramma)
             db.session.commit()

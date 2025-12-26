@@ -189,7 +189,7 @@ class ActPianteResource(Resource):
         try:
             data = request.form.get('payload')
             payload = json.loads(data)
-        except Exception as e:
+        except Exception:
             return {"message": "Errore durante il recupero dei dati da salvare"}, 400
 
 
@@ -199,7 +199,7 @@ class ActPianteResource(Resource):
         if file_foto:
             try:
                 bytes_foto = file_foto.read()
-            except Exception as e:
+            except Exception:
                 return {"message": "Errore durante il recupero della foto da salvare"}, 400
 
 
@@ -225,7 +225,7 @@ class ActPianteResource(Resource):
             db.session.add(nuova_pianta)
             db.session.add(nuova_pianta.dettaglio)
             db.session.commit()
-        except SQLAlchemyError as e:
+        except SQLAlchemyError:
             db.session.rollback()
             return {"message": "Errore durante la creazione della pianta"}, 500
         
@@ -259,7 +259,7 @@ class ActPianteResource(Resource):
             data = request.form.get('payload')
             if data is not None:
                 payload = json.loads(data)
-        except Exception as e:
+        except Exception:
             return {"message": "Errore durante il recupero dei dati da salvare"}, 400
 
 
@@ -269,7 +269,7 @@ class ActPianteResource(Resource):
         if file_foto:
             try:
                 bytes_foto = file_foto.read()
-            except Exception as e:
+            except Exception:
                 return {"message": "Errore durante il recupero della foto da salvare"}, 400
 
         
@@ -326,7 +326,7 @@ class ActPianteResource(Resource):
                             )
                             pianta.dettaglio_sensori = pianta_relationship
                             db.session.add(pianta_relationship)
-                        except SQLAlchemyError as e:
+                        except SQLAlchemyError:
                             db.session.rollback()
                             return {"message": "Errore durante l'aggiornamento dei dati dei sensori"}, 500
                     # it scrolls the json payload for the current table

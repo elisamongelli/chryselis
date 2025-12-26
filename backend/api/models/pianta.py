@@ -8,7 +8,7 @@ class ActPianteTestataModel(db.Model):
     # specify the DB table name
     __tablename__ = 'act_anagrafica_piante_testata'
 
-    # lists all DB table columns
+    # list all DB table columns
     ID_PIANTA = db.Column(db.String(100), primary_key=True)
     ID_STATO_PIANTA = db.Column(db.String(500), db.ForeignKey('lkp_stati_piante.ID_STATO'))
     ID_ULTIMO_PROGRAMMA_ESEGUITO = db.Column(db.String(100), db.ForeignKey('lkp_programmi.ID_PROGRAMMA'))
@@ -51,7 +51,7 @@ class ActPianteDettaglioModel(db.Model):
     # specify the DB table name
     __tablename__ = 'act_anagrafica_piante_dettaglio'
 
-    # lists all DB table columns
+    # list all DB table columns
     ID_PIANTA = db.Column(db.String(100), db.ForeignKey('act_anagrafica_piante_testata.ID_PIANTA'), primary_key=True)
     NOME_PIANTA = db.Column(db.String(500))
     DESCRIZIONE_PIANTA = db.Column(db.Text)
@@ -84,7 +84,7 @@ class ActPianteDettaglioSensoriModel(db.Model):
     # specify the DB table name
     __tablename__ = 'act_anagrafica_piante_dettaglio_sensori'
 
-    # lists all DB table columns
+    # list all DB table columns
     ID_PIANTA = db.Column(db.String(100), db.ForeignKey('act_anagrafica_piante_testata.ID_PIANTA'), primary_key=True)
     UMIDITA_CORRENTE = db.Column(db.Integer)
     ACQUA_ULTIMA_INNAFFIATURA = db.Column(db.Integer)
@@ -96,7 +96,6 @@ class ActPianteDettaglioSensoriModel(db.Model):
 
     # class constructor
     def __init__(self, ID_PIANTA, UMIDITA_CORRENTE, ACQUA_ULTIMA_INNAFFIATURA, ALTRO_DATO_SENSORI_1, ALTRO_DATO_SENSORI_2, ALTRO_DATO_SENSORI_3, ALTRO_DATO_SENSORI_4):
-        # ID will be taken from the testata table
         self.ID_PIANTA = ID_PIANTA
         self.UMIDITA_CORRENTE = UMIDITA_CORRENTE
         self.ACQUA_ULTIMA_INNAFFIATURA = ACQUA_ULTIMA_INNAFFIATURA

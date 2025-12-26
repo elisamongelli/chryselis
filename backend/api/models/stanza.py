@@ -8,7 +8,7 @@ class LookupStanzeModel(db.Model):
     # specify the DB table name
     __tablename__ = 'lkp_stanze'
 
-    # lists all DB table columns
+    # list all DB table columns
     ID_STANZA = db.Column(db.String(100), primary_key=True)
     NOME_STANZA = db.Column(db.String(500))
     DIMENSIONE_GRIGLIA_X = db.Column(db.Integer)
