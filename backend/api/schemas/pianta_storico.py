@@ -3,7 +3,7 @@ from marshmallow import Schema, fields, pre_dump
 
 
 class ActPianteStoricoSchema(Schema):
-    # define schema from history plants table
+    # define schema from plants history table
     ID_PIANTA = fields.Str()
     ID_STATO_PIANTA = fields.Str()
     NOME_STATO = fields.Str(attribute='stato.NOME_STATO')
@@ -22,39 +22,41 @@ class ActPianteStoricoSchema(Schema):
 
 
 
-    # gets each row from KeyedTuple and trasforms it into a dictionary
-    #   pass_many argument means that the function can receive both objects and lists
+    # get each row from KeyedTuple and transforms it into a dictionary
+    #   pass_many means that the function can receive both objects and lists
     @pre_dump(pass_many=True)
     def _normalize_mapping(self, data, many):
 
         # called for each row
         def from_row_to_dict(row):
-            # checks if the current row is a KeyedTuple or a dictionary
+            # check if the current row is a KeyedTuple or a dictionary
             #   if the object is already a ORM, the row is returned as it is
-            mapping = row._mapping if hasattr(row, '_mapping') else (row if isinstance(row, dict) else None)
+            rowObject = row._mapping if hasattr(row, '_mapping') else (row if isinstance(row, dict) else None)
 
-            if mapping is None:
+            if rowObject is None:
                 return row
             
-            out = {}
+            outObject = {}
             # for each field of the schema
             for fieldName, field in self.fields.items():
-                # finds the corresponding attribute in the schema
-                attribute = field.attribute or fieldName
-                # it it contains a dot, it splits the name in the entity and its field
-                entity, field = attribute.split('.', 1) if '.' in attribute else (None, attribute)
-                # if entity exists, the key will be the field, otherwise the attribute itself
-                key = field if entity else attribute
+                # find the corresponding attribute in the schema
+                schemaAttribute = field.attribute or fieldName
+                # it might contain a dot
+                #   if so, it splits the name in the entity and its field
+                #   otherwise, the entity is None and the field is the attribute itself
+                entity, field = schemaAttribute.split('.', 1) if '.' in schemaAttribute else (None, schemaAttribute)
+                # if entity exists, the key will be the field, otherwise the attribute
+                key = field if entity else schemaAttribute
                 # if the key is contained inside the mapping (fields to be returned)
                 #   the value will be the one corresponding to the key
                 #   otherwise the field will not be shown in the response payload
-                if key in mapping:
-                    value = mapping[key]
+                if key in rowObject:
+                    value = rowObject[key]
                     if entity:
-                        out.setdefault(entity, {})[field] = value
+                        outObject.setdefault(entity, {})[field] = value
                     else:
-                        out[attribute] = value
+                        outObject[schemaAttribute] = value
             
-            return out
+            return outObject
         
         return [from_row_to_dict(row) for row in data] if many else from_row_to_dict(data)
