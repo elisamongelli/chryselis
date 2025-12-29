@@ -32,17 +32,17 @@ class LookupPianteProgrammiResource(Resource):
 
             try:
 
-                plantSchedule = LookupPianteProgrammiModel.query\
-                            .order_by(LookupPianteProgrammiModel.ID_PIANTA)
+                plantsSchedules = LookupPianteProgrammiModel.query\
+                                    .order_by(LookupPianteProgrammiModel.ID_PIANTA)
                 
-                pagination = plantSchedule.paginate(page=page, per_page=limit, error_out=False)
-                plantsSchedules = pagination.items
+                pagination = plantsSchedules.paginate(page=page, per_page=limit, error_out=False)
+                plantsSchedulesArray = pagination.items
                 totalItems = pagination.total
                 totalPages = pagination.pages
                 hasMore = pagination.has_next
                 return {
-                    "pianteProgrammi": many_plants_schedules_schema.dump(plantsSchedules),
-                    "count": len(plantsSchedules),
+                    "pianteProgrammi": many_plants_schedules_schema.dump(plantsSchedulesArray),
+                    "count": len(plantsSchedulesArray),
                     "hasMore": hasMore,
                     "page": page,
                     "limit": limit,
@@ -58,18 +58,18 @@ class LookupPianteProgrammiResource(Resource):
         
             try:
                 
-                plantSchedule = LookupPianteProgrammiModel.query\
+                plantsSchedules = LookupPianteProgrammiModel.query\
                                     .filter(LookupPianteProgrammiModel.ID_PIANTA == plantID)\
                                     .order_by(LookupPianteProgrammiModel.ID_PIANTA)
                 
-                pagination = plantSchedule.paginate(page=page, per_page=limit, error_out=False)
-                plantsSchedules = pagination.items # LookupPianteProgrammiModel.query.filter(LookupPianteProgrammiModel.ID_PIANTA == idPianta).all()
+                pagination = plantsSchedules.paginate(page=page, per_page=limit, error_out=False)
+                plantsSchedulesArray = pagination.items
                 totalItems = pagination.total
                 totalPages = pagination.pages
                 hasMore = pagination.has_next
                 return {
-                    "pianteProgrammi": many_plants_schedules_schema.dump(plantsSchedules),
-                    "count": len(plantsSchedules),
+                    "pianteProgrammi": many_plants_schedules_schema.dump(plantsSchedulesArray),
+                    "count": len(plantsSchedulesArray),
                     "hasMore": hasMore,
                     "page": page,
                     "limit": limit,
@@ -85,17 +85,17 @@ class LookupPianteProgrammiResource(Resource):
         
             try:
 
-                plantSchedule = LookupPianteProgrammiModel.query\
+                plantsSchedules = LookupPianteProgrammiModel.query\
                                     .filter(LookupPianteProgrammiModel.ID_PROGRAMMA == scheduleID)
                 
-                pagination = plantSchedule.paginate(page=page, per_page=limit, error_out=False)
-                plantsSchedules = pagination.items # LookupPianteProgrammiModel.query.filter(LookupPianteProgrammiModel.ID_PROGRAMMA == idProgramma).all()
+                pagination = plantsSchedules.paginate(page=page, per_page=limit, error_out=False)
+                plantsSchedulesArray = pagination.items
                 totalItems = pagination.total
                 totalPages = pagination.pages
                 hasMore = pagination.has_next
                 return {
-                    "pianteProgrammi": many_plants_schedules_schema.dump(plantsSchedules),
-                    "count": len(plantsSchedules),
+                    "pianteProgrammi": many_plants_schedules_schema.dump(plantsSchedulesArray),
+                    "count": len(plantsSchedulesArray),
                     "hasMore": hasMore,
                     "page": page,
                     "limit": limit,
@@ -109,7 +109,7 @@ class LookupPianteProgrammiResource(Resource):
         # else if plant ID is not null and schedule ID is not null, get the one plant-schedule association corresponding to the IDs
         try:
 
-            plantSchedule = LookupPianteProgrammiModel.query\
+            plantsSchedules = LookupPianteProgrammiModel.query\
                                 .filter(LookupPianteProgrammiModel.ID_PIANTA == plantID, LookupPianteProgrammiModel.ID_PROGRAMMA == scheduleID)\
                                 .first()
         except SQLAlchemyError:
@@ -117,8 +117,8 @@ class LookupPianteProgrammiResource(Resource):
 
 
         # if the plant-schedule association has been retrieve successfully from the DB
-        if plantSchedule:
-            return one_plant_schedule_schema.dump(plantSchedule), 200
+        if plantsSchedules:
+            return one_plant_schedule_schema.dump(plantsSchedules), 200
 
         # else return 404 error, plant-schedule association not found
         return {"message": "Associazione tra le piante e i programmi non trovato"}, 404

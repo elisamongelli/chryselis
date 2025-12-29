@@ -14,8 +14,8 @@ from api.schemas.pianta import ActPianteSchema, ActFotoPianteSchema
 
 
 
-many_piante_schema = ActPianteSchema(many=True)
-one_piante_schema = ActPianteSchema()
+many_plants_schema = ActPianteSchema(many=True)
+one_plant_schema = ActPianteSchema()
 
 one_foto_piante_schema = ActFotoPianteSchema()
 
@@ -73,7 +73,8 @@ photo_fields = [ActPianteTestataModel.ID_PIANTA,
 class ActPianteResource(Resource):
 
 
-    def get(self, id=None):
+    def get(self, plantID=None):
+
 
         # the map helps the fields attribute during REST API invoke to not write the model for each field
         fields_map = {
@@ -100,20 +101,22 @@ class ActPianteResource(Resource):
             'ALTRO_DATO_SENSORI_3' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_3,
             'ALTRO_DATO_SENSORI_4' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4
         }
+
+
         
-        # fields to return can be chosen both if ID is None or populated
+        # fields to be returned can be chosen both if ID is None or populated
         fields = request.args.get('fields', default=None, type=str)
 
         if fields is None:
             fields = all_plant_fields
         else:
-            # gets the fields list in the REST API invoke and associates them with the ones in the map
+            # get the fields list from the REST API invoke and associate them with the ones in the map
             fields = [field.strip() for field in fields.split(',') if field.strip()]
             fields = [fields_map[name].label(name) for name in fields if name in fields_map]
 
 
-        # if ID does not exists, get all plants
-        if id is None:
+        # if ID does not exist, get all plants
+        if plantID is None:
             try:
 
                 page = request.args.get('page', default=1, type=int)
@@ -129,7 +132,7 @@ class ActPianteResource(Resource):
 
                 # query construction:
                 #   with_entities filters the query showing only the fields specified in the fields array
-                query = ActPianteTestataModel.query\
+                plants = ActPianteTestataModel.query\
                             .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                             .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                             .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
@@ -139,14 +142,14 @@ class ActPianteResource(Resource):
                             .order_by(fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else fields_map.get(orderBy[0]).asc())
                 
                 
-                pagination = query.paginate(page=page, per_page=limit, error_out=False)
-                piante = pagination.items
+                pagination = plants.paginate(page=page, per_page=limit, error_out=False)
+                plantsArray = pagination.items
                 totalItems = pagination.total
                 totalPages = pagination.pages
                 hasMore = pagination.has_next
                 return {
-                    "piante": many_piante_schema.dump(piante),
-                    "count": len(piante),
+                    "piante": many_plants_schema.dump(plantsArray),
+                    "count": len(plantsArray),
                     "hasMore": hasMore,
                     "page": page,
                     "limit": limit,
@@ -161,21 +164,21 @@ class ActPianteResource(Resource):
             # query construction:
             #   with_entities filters the query showing only the fields specified in the fields array
             #   filter shows the only plant with the ID specified in the path
-            pianta = ActPianteTestataModel.query\
+            plant = ActPianteTestataModel.query\
                         .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                         .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                         .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
                         .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO)\
                         .join(LookupStanzeModel, LookupStanzeModel.ID_STANZA == ActPianteDettaglioModel.ID_STANZA)\
                         .with_entities(*fields)\
-                        .filter(ActPianteTestataModel.ID_PIANTA == id)\
+                        .filter(ActPianteTestataModel.ID_PIANTA == plantID)\
                         .first()
         except SQLAlchemyError:
             return {"message": "Errore durante il recupero della pianta"}, 500
 
         # if the plant has been retrieve successfully from the DB
-        if pianta:
-            return one_piante_schema.dump(pianta), 200
+        if plant:
+            return one_plant_schema.dump(plant), 200
 
         # else return 404 error, plant not found
         return {"message": "Pianta non trovata"}, 404
@@ -185,108 +188,108 @@ class ActPianteResource(Resource):
     # plant creation is implemented with multipart form-data
     def post(self):
 
-        # gets JSON payload with all fields except for the photo
+        # get JSON request payload with all fields except for the photo
         try:
-            data = request.form.get('payload')
-            payload = json.loads(data)
+            requestPayload = request.form.get('payload')
+            jsonRequestPayload = json.loads(requestPayload)
         except Exception:
             return {"message": "Errore durante il recupero dei dati da salvare"}, 400
 
 
-        # gets the photos bytes from the file attachment in the multipart form-data request
-        bytes_foto = None
-        file_foto = request.files.get('image')
-        if file_foto:
+        # get the photo's bytes from the file attachment in the multipart form-data request
+        photoBytes = None
+        photoFile = request.files.get('image')
+        if photoFile:
             try:
-                bytes_foto = file_foto.read()
+                photoBytes = photoFile.read()
             except Exception:
                 return {"message": "Errore durante il recupero della foto da salvare"}, 400
 
 
-        # create a new plant with request body's data
-        nuova_pianta = ActPianteTestataModel(
-            ID_STATO_PIANTA=payload.get('ID_STATO_PIANTA'),
-            ID_ULTIMO_PROGRAMMA_ESEGUITO=payload.get('ID_ULTIMO_PROGRAMMA_ESEGUITO'),
+        # create a new plant with JSON request payload's data
+        newPlant = ActPianteTestataModel(
+            ID_STATO_PIANTA=jsonRequestPayload.get('ID_STATO_PIANTA'),
+            ID_ULTIMO_PROGRAMMA_ESEGUITO=jsonRequestPayload.get('ID_ULTIMO_PROGRAMMA_ESEGUITO'),
         )
         
-        # need to create new model for plant details, because it does not exist in the database yet
-        nuova_pianta.dettaglio = ActPianteDettaglioModel(
-            ID_PIANTA=nuova_pianta.ID_PIANTA,
-            NOME_PIANTA=payload.get('NOME_PIANTA'),
-            DESCRIZIONE_PIANTA=payload.get('DESCRIZIONE_PIANTA'),
-            FOTO_PIANTA=bytes_foto,
-            ID_STANZA=payload.get('ID_STANZA'),
-            POSIZIONE_STANZA_X=payload.get('POSIZIONE_STANZA_X'),
-            POSIZIONE_STANZA_Y=payload.get('POSIZIONE_STANZA_Y')
+        # create a new model for plant details, because it does not exist in the database yet
+        newPlant.dettaglio = ActPianteDettaglioModel(
+            ID_PIANTA=newPlant.ID_PIANTA,
+            NOME_PIANTA=jsonRequestPayload.get('NOME_PIANTA'),
+            DESCRIZIONE_PIANTA=jsonRequestPayload.get('DESCRIZIONE_PIANTA'),
+            FOTO_PIANTA=photoBytes,
+            ID_STANZA=jsonRequestPayload.get('ID_STANZA'),
+            POSIZIONE_STANZA_X=jsonRequestPayload.get('POSIZIONE_STANZA_X'),
+            POSIZIONE_STANZA_Y=jsonRequestPayload.get('POSIZIONE_STANZA_Y')
         )
 
 
         try:
-            db.session.add(nuova_pianta)
-            db.session.add(nuova_pianta.dettaglio)
+            db.session.add(newPlant)
+            db.session.add(newPlant.dettaglio)
             db.session.commit()
         except SQLAlchemyError:
             db.session.rollback()
             return {"message": "Errore durante la creazione della pianta"}, 500
         
-        # gets the created plant
-        pianta_completa = ActPianteTestataModel.query\
-                            .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                            .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
-                            .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO)\
-                            .join(LookupStanzeModel, LookupStanzeModel.ID_STANZA == ActPianteDettaglioModel.ID_STANZA)\
-                            .with_entities(*all_plant_fields_without_sensors)\
-                            .filter(ActPianteTestataModel.ID_PIANTA == nuova_pianta.ID_PIANTA)\
-                            .first()
+        # get the created plant
+        entirePlant = ActPianteTestataModel.query\
+                        .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
+                        .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
+                        .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO)\
+                        .join(LookupStanzeModel, LookupStanzeModel.ID_STANZA == ActPianteDettaglioModel.ID_STANZA)\
+                        .with_entities(*all_plant_fields_without_sensors)\
+                        .filter(ActPianteTestataModel.ID_PIANTA == newPlant.ID_PIANTA)\
+                        .first()
 
-        return one_piante_schema.dump(pianta_completa), 201
+        return one_plant_schema.dump(entirePlant), 201
 
 
 
-    def patch(self, id):
+    def patch(self, plantID):
         
         # get the one plant from the DB with the corresponding ID
-        pianta = ActPianteTestataModel.query.get(id)
+        plant = ActPianteTestataModel.query.get(plantID)
 
         # if the ID is not found in the DB, return 404 error, plant not found
-        if not pianta:
+        if not plant:
             return {"message": "Pianta non trovata"}, 404
         
 
-        # gets JSON payload with all fields to be updated except for the photo
-        payload=None
+        # get JSON payload with all fields to be updated except for the photo
+        jsonRequestPayload=None
         try:
-            data = request.form.get('payload')
-            if data is not None:
-                payload = json.loads(data)
+            requestPayload = request.form.get('payload')
+            if requestPayload is not None:
+                jsonRequestPayload = json.loads(requestPayload)
         except Exception:
             return {"message": "Errore durante il recupero dei dati da salvare"}, 400
 
 
-        # gets the photos bytes from the file attachment in the multipart form-data request
-        bytes_foto = None
-        file_foto = request.files.get('image')
-        if file_foto:
+        # get the photo's bytes from the file attachment in the multipart form-data request
+        photoBytes = None
+        photoFile = request.files.get('image')
+        if photoFile:
             try:
-                bytes_foto = file_foto.read()
+                photoBytes = photoFile.read()
             except Exception:
                 return {"message": "Errore durante il recupero della foto da salvare"}, 400
 
         
 
-        valid_data=None
+        validFields=None
         try:
-            # load method returnes a dictionary with all valid fields
+            # load method returnes a dictionary with all the valid fields
             #   if a field has a wrong data type or does not exist on DB table, it throws a ValidationError
-            #   partial=True allows to get a JSON request with only a subset of fields
-            if payload is not None:
-                valid_data = one_piante_schema.load(payload, partial=True)
+            #   partial=True allows to accept a JSON request payload with only a subset of fields
+            if jsonRequestPayload is not None:
+                validFields = one_plant_schema.load(jsonRequestPayload, partial=True)
         except ValidationError:
             return {"message": "I valori inseriti per la modifica della pianta non sono validi"}, 400
         
         
-        # sets the allowed fields and updates only them on DB
-        allowed_fields = ['NOME_PIANTA',
+        # set the allowed fields and update only them on DB
+        allowedFields = ['NOME_PIANTA',
                           'DESCRIZIONE_PIANTA',
                           'ID_STATO_PIANTA',
                           'ID_STANZA',
@@ -299,24 +302,24 @@ class ActPianteResource(Resource):
                           'ALTRO_DATO_SENSORI_2',
                           'ALTRO_DATO_SENSORI_3',
                           'ALTRO_DATO_SENSORI_4']
-        # it scrolls the valid_data dictionary
+        # scroll the validFields dictionary
         #   key contains the header table's field or the table itself, like "dettaglio" and "dettaglio_sensori"
         #   value contains the corresponding value or the json payload with all the fields of the current table
-        if valid_data is not None:
-            for key, value in valid_data.items():
-                # if current table is the header table, key is the specific field
-                if key in allowed_fields:
-                    setattr(pianta, key, value)
+        if validFields is not None:
+            for key, value in validFields.items():
+                # if current table is the header table, key will be the specific field
+                if key in allowedFields:
+                    setattr(plant, key, value)
                 else:
-                    # gets the relationship between header plant and its details
-                    pianta_relationship = getattr(pianta, key)
+                    # get the relationship between header plant and its details
+                    plantRelationship = getattr(plant, key)
                     # when the key is "dettaglio_sensori" the relationship might not exist
                     #   because it's not created during the plant creation
-                    if key == 'dettaglio_sensori' and pianta_relationship is None:
+                    if key == 'dettaglio_sensori' and plantRelationship is None:
                         try:
-                            # initializes the relationship between header plant and sensors details
-                            pianta_relationship = ActPianteDettaglioSensoriModel(
-                                ID_PIANTA=id,
+                            # initialize the relationship between header plant and sensors details
+                            plantRelationship = ActPianteDettaglioSensoriModel(
+                                ID_PIANTA=plantID,
                                 UMIDITA_CORRENTE=None,
                                 ACQUA_ULTIMA_INNAFFIATURA=None,
                                 ALTRO_DATO_SENSORI_1=None,
@@ -324,48 +327,48 @@ class ActPianteResource(Resource):
                                 ALTRO_DATO_SENSORI_3=None,
                                 ALTRO_DATO_SENSORI_4=None
                             )
-                            pianta.dettaglio_sensori = pianta_relationship
-                            db.session.add(pianta_relationship)
+                            plant.dettaglio_sensori = plantRelationship
+                            db.session.add(plantRelationship)
                         except SQLAlchemyError:
                             db.session.rollback()
                             return {"message": "Errore durante l'aggiornamento dei dati dei sensori"}, 500
-                    # it scrolls the json payload for the current table
+                    # scroll the json request payload for the current table
                     for t_key, t_value in value.items():
                         # if the current field is allowed, it updates its value
-                        if t_key in allowed_fields:
-                            setattr(pianta_relationship, t_key, t_value)
+                        if t_key in allowedFields:
+                            setattr(plantRelationship, t_key, t_value)
         
 
         try:
-            if bytes_foto is not None:
-                pianta.dettaglio.FOTO_PIANTA = bytes_foto
-            pianta.DATA_ULTIMA_MODIFICA = datetime.datetime.now()
+            if photoBytes is not None:
+                plant.dettaglio.FOTO_PIANTA = photoBytes
+            plant.DATA_ULTIMA_MODIFICA = datetime.datetime.now()
             db.session.commit()
         except SQLAlchemyError:
             db.session.rollback()
             return {"message": "Errore durante l'aggiornamento della pianta"}, 500
         
         # gets the updated plant
-        pianta_completa = ActPianteTestataModel.query\
+        entirePlant = ActPianteTestataModel.query\
                             .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                             .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                             .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
                             .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO)\
                             .join(LookupStanzeModel, LookupStanzeModel.ID_STANZA == ActPianteDettaglioModel.ID_STANZA)\
                             .with_entities(*all_plant_fields)\
-                            .filter(ActPianteTestataModel.ID_PIANTA == id)\
+                            .filter(ActPianteTestataModel.ID_PIANTA == plantID)\
                             .first()
 
-        return one_piante_schema.dump(pianta_completa), 200
+        return one_plant_schema.dump(entirePlant), 200
     
 
 
-    def delete(self, id):
+    def delete(self, plantID):
 
         # get the one plant from the DB with the corresponding ID
-        plant = ActPianteTestataModel.query.get(id)
-        plant_detail = ActPianteDettaglioModel.query.get(id)
-        plant_detail_sensors = ActPianteDettaglioSensoriModel.query.get(id)
+        plant = ActPianteTestataModel.query.get(plantID)
+        plantDetail = ActPianteDettaglioModel.query.get(plantID)
+        plantDetailSensors = ActPianteDettaglioSensoriModel.query.get(plantID)
 
         # if the ID is not found in the DB, return 404 error, plant not found
         if not plant:
@@ -373,9 +376,9 @@ class ActPianteResource(Resource):
 
         # else delete the plant from the DB
         try:
-            if plant_detail_sensors is not None:
-                db.session.delete(plant_detail_sensors)
-            db.session.delete(plant_detail)
+            if plantDetailSensors is not None:
+                db.session.delete(plantDetailSensors)
+            db.session.delete(plantDetail)
             db.session.delete(plant)
             db.session.commit()
             return {"message": "Pianta eliminata"}, 204
@@ -391,59 +394,57 @@ class ActFotoPianteResource(Resource):
 
 
 
-    def get(self, id=None):
+    def get(self, plantID=None):
 
         
-        # if ID does not exists, get all plants' photos
-        if id is None:
+        # if ID does not exists, get all plants' photo
+        if plantID is None:
 
-            id_list_string = request.args.get('filter', default="", type=str)
+            idListString = request.args.get('filter', default="", type=str)
             
             # make a list from IDs concatenation
-            id_list = [s.strip() for s in id_list_string.split(',') if s.strip()]
-            if not id_list:
+            idList = [s.strip() for s in idListString.split(',') if s.strip()]
+            if not idList:
                 return {"message": "E' necessario specificare gli ID delle piante"}, 400
             
 
             try:
-            
                 # get ID and photo from the plants whose IDs have been specified
-                piante = ActPianteTestataModel.query\
+                plants = ActPianteTestataModel.query\
                     .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                     .with_entities(*photo_fields)\
-                    .filter(ActPianteTestataModel.ID_PIANTA.in_(id_list))\
+                    .filter(ActPianteTestataModel.ID_PIANTA.in_(idList))\
                     .all()
-            
             except SQLAlchemyError:
                 return {"message": "Errore durante il recupero delle foto delle piante"}, 500
             
 
             # create a map with plant's ID as key and the photo as value
-            found_map = {pianta.ID_PIANTA: pianta.FOTO_PIANTA for pianta in piante}
+            plantsMap = {pianta.ID_PIANTA: pianta.FOTO_PIANTA for pianta in plants}
 
             # create a memory buffer to contain the zip file
             buffer = io.BytesIO()
             # the with clause opens and automatically closes the resource
-            # it opens up the file on write mode and with deflated compression
-            with zipfile.ZipFile(buffer, 'w', compression=zipfile.ZIP_DEFLATED) as zip_file:
-                for single_id in id_list:
-                    foto = found_map.get(single_id)
-                    if foto:
-                        # opens up the single image to get its format
-                        extension = Image.open(io.BytesIO(foto)).format.lower()
-                        zip_file.writestr(f"{single_id}.{extension}", foto)
+            #   it opens up the file on write mode and with deflated compression
+            with zipfile.ZipFile(buffer, 'w', compression=zipfile.ZIP_DEFLATED) as zipFile:
+                for singleID in idList:
+                    photo = plantsMap.get(singleID)
+                    if photo:
+                        # open up the single image to get its format
+                        extension = Image.open(io.BytesIO(photo)).format.lower()
+                        zipFile.writestr(f"{singleID}.{extension}", photo)
                     else:
-                        zip_file.writestr(f"{single_id}_missing.txt", f"Foto non trovata per ID {single_id}")
+                        zipFile.writestr(f"{singleID}_missing.txt", f"Foto non trovata per ID {singleID}")
             
             # get the cursor to the beginning of the buffer to read it
             buffer.seek(0)
             # get the bytes of the zip file
-            zip_bytes = buffer.getvalue()
+            zipBytes = buffer.getvalue()
             # download the file with photos.zip name
             headers = {"Content-Disposition": 'attachment; filename="photos.zip"'}
 
 
-            return Response(zip_bytes, mimetype="application/zip", headers=headers)
+            return Response(zipBytes, mimetype="application/zip", headers=headers)
             
 
 
@@ -451,27 +452,27 @@ class ActFotoPianteResource(Resource):
         try:
 
             # query construction:
-            #   with_entities filters the query showing only the fields specified in the fields array (ID_PIANTA, FOTO_PIANTA)
+            #   with_entities filters the query showing only the fields specified in the fields array
             #   filter shows the only plant with the ID specified in the path
-            pianta = ActPianteTestataModel.query\
+            plant = ActPianteTestataModel.query\
                         .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                         .with_entities(*photo_fields)\
-                        .filter(ActPianteTestataModel.ID_PIANTA == id)\
+                        .filter(ActPianteTestataModel.ID_PIANTA == plantID)\
                         .first()
             
         except SQLAlchemyError:
             return {"message": "Errore durante il recupero della pianta"}, 500
         
 
-        # if the plant has been retrieve successfully from the DB, returnes its photo
-        if pianta:
-            foto_pianta = pianta.FOTO_PIANTA
+        # if the plant has been successfully retrieved from the DB, returnes its photo
+        if plant:
+            photoPlant = plant.FOTO_PIANTA
 
-            if foto_pianta:
-                extension = Image.open(io.BytesIO(foto_pianta)).format.lower()
-                headers = {"Content-Disposition": 'attachment; filename="' + pianta.ID_PIANTA + '.' + extension + '"'}
+            if photoPlant:
+                extension = Image.open(io.BytesIO(photoPlant)).format.lower()
+                headers = {"Content-Disposition": 'attachment; filename="' + plant.ID_PIANTA + '.' + extension + '"'}
                 
-                return Response(foto_pianta, mimetype='image/' + extension, headers=headers)
+                return Response(photoPlant, mimetype='image/' + extension, headers=headers)
             
             else:
                 return {"message": "La pianta non ha una foto"}, 200
@@ -481,10 +482,10 @@ class ActFotoPianteResource(Resource):
     
 
 
-    def delete(self, id):
+    def delete(self, plantID):
 
-        plant = ActPianteTestataModel.query.get(id)
-        plant_detail = ActPianteDettaglioModel.query.get(id)
+        plant = ActPianteTestataModel.query.get(plantID)
+        plantDetail = ActPianteDettaglioModel.query.get(plantID)
 
         if not plant:
             return {"message": "Pianta non trovata"}, 404
@@ -492,7 +493,7 @@ class ActFotoPianteResource(Resource):
         # else delete the plant's photo from the DB
         try:
             plant.DATA_ULTIMA_MODIFICA = datetime.datetime.now()
-            plant_detail.FOTO_PIANTA = None
+            plantDetail.FOTO_PIANTA = None
             db.session.commit()
             return {"message": "Foto eliminata"}, 204
         except SQLAlchemyError:

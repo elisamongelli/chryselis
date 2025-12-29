@@ -104,13 +104,13 @@ class ActPianteStoricoResource(Resource):
 
                 
                 pagination = plantsHistory.paginate(page=page, per_page=limit, error_out=False)
-                piante = pagination.items
+                plantsHistoryArray = pagination.items
                 totalItems = pagination.total
                 totalPages = pagination.pages
                 hasMore = pagination.has_next
                 return {
-                    "piante": many_plants_history_schema.dump(piante),
-                    "count": len(piante),
+                    "piante": many_plants_history_schema.dump(plantsHistoryArray),
+                    "count": len(plantsHistoryArray),
                     "hasMore": hasMore,
                     "page": page,
                     "limit": limit,
@@ -136,13 +136,13 @@ class ActPianteStoricoResource(Resource):
             
 
             pagination = plantsHistory.paginate(page=page, per_page=limit, error_out=False)
-            piante = pagination.items
+            plantsHistoryArray = pagination.items
             totalItems = pagination.total
             totalPages = pagination.pages
             hasMore = pagination.has_next
             return {
-                "piante": many_plants_history_schema.dump(piante),
-                "count": len(piante),
+                "piante": many_plants_history_schema.dump(plantsHistoryArray),
+                "count": len(plantsHistoryArray),
                 "hasMore": hasMore,
                 "page": page,
                 "limit": limit,
@@ -226,7 +226,7 @@ class ActPianteStoricoResource(Resource):
                                 .filter(ActPianteStoricoModel.DATA_MODIFICA < datetime.datetime.strptime(endDate, '%Y-%m-%d') + datetime.timedelta(days=1))\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
-                except:
+                except Exception:
                     return {"message": "Errore durante il recupero dello storico delle piante da eliminare"}, 500
             
 
@@ -238,7 +238,7 @@ class ActPianteStoricoResource(Resource):
                                 .filter(ActPianteStoricoModel.DATA_MODIFICA >= datetime.datetime.strptime(startDate, '%Y-%m-%d'))\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
-                except:
+                except Exception:
                     return {"message": "Errore durante il recupero dello storico delle piante da eliminare"}, 500
             
 
@@ -249,7 +249,7 @@ class ActPianteStoricoResource(Resource):
                                 .filter(ActPianteStoricoModel.DATA_MODIFICA < datetime.datetime.strptime(endDate, '%Y-%m-%d') + datetime.timedelta(days=1))\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
-                except:
+                except Exception:
                     return {"message": "Errore durante il recupero dello storico delle piante da eliminare"}, 500
             
 
@@ -259,7 +259,7 @@ class ActPianteStoricoResource(Resource):
                     plants = ActPianteStoricoModel.query\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
-                except:
+                except Exception:
                     return {"message": "Errore durante il recupero dello storico delle piante da eliminare"}, 500
         
 
@@ -278,7 +278,7 @@ class ActPianteStoricoResource(Resource):
                                 .filter(ActPianteStoricoModel.DATA_MODIFICA < datetime.datetime.strptime(endDate, '%Y-%m-%d') + datetime.timedelta(days=1))\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
-                except:
+                except Exception:
                     return {"message": "Errore durante il recupero dello storico della pianta da eliminare"}, 500
             
 
@@ -291,7 +291,7 @@ class ActPianteStoricoResource(Resource):
                                 .filter(ActPianteStoricoModel.DATA_MODIFICA >= datetime.datetime.strptime(startDate, '%Y-%m-%d'))\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
-                except:
+                except Exception:
                     return {"message": "Errore durante il recupero dello storico della pianta da eliminare"}, 500
             
 
@@ -303,7 +303,7 @@ class ActPianteStoricoResource(Resource):
                                 .filter(ActPianteStoricoModel.DATA_MODIFICA < datetime.datetime.strptime(endDate, '%Y-%m-%d') + datetime.timedelta(days=1))\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
-                except:
+                except Exception:
                     return {"message": "Errore durante il recupero dello storico della pianta da eliminare"}, 500
             
 
@@ -314,7 +314,7 @@ class ActPianteStoricoResource(Resource):
                                 .filter(ActPianteStoricoModel.ID_PIANTA == plantID)\
                                 .order_by(ActPianteStoricoModel.DATA_MODIFICA.desc())\
                                 .all()
-                except:
+                except Exception:
                     return {"message": "Errore durante il recupero dello storico della pianta da eliminare"}, 500
 
 
