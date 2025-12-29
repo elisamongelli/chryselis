@@ -30,6 +30,16 @@ class ActPianteTestataModel(db.Model):
     )
 
 
+    stato = db.relationship(
+        'LookupStatiModel'
+    )
+
+
+    programma = db.relationship(
+        'LookupProgrammiModel'
+    )
+
+
     # class constructor
     def __init__(self, ID_STATO_PIANTA, ID_ULTIMO_PROGRAMMA_ESEGUITO, ID_PIANTA=None, DATA_INSERIMENTO=None, DATA_ULTIMA_MODIFICA=None):
         # if no ID is provided, it generates a new UUID from Python to avoid INSERT errors without a default
@@ -59,6 +69,11 @@ class ActPianteDettaglioModel(db.Model):
     ID_STANZA = db.Column(db.String(100), db.ForeignKey('lkp_stanze.ID_STANZA'))
     POSIZIONE_STANZA_X = db.Column(db.Integer)
     POSIZIONE_STANZA_Y = db.Column(db.Integer)
+
+
+    stanza = db.relationship(
+        'LookupStanzeModel'
+    )
 
 
     # class constructor
