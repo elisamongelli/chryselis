@@ -18,14 +18,14 @@ class ActPianteTestataModel(db.Model):
 
     dettaglio = db.relationship(
         'ActPianteDettaglioModel',
-        backref = 'testata',
+        backref = 'header',
         uselist = False
     )
 
 
-    dettaglio_sensori = db.relationship(
+    dettaglioSensori = db.relationship(
         'ActPianteDettaglioSensoriModel',
-        backref = 'testata',
+        backref = 'header',
         uselist = False
     )
 

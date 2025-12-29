@@ -5,24 +5,24 @@ from marshmallow import Schema, fields, validate
 class ActPianteDettaglioSchema(Schema):
     # define schema for plants details table
 
-    NOME_PIANTA = fields.Str(attribute='dettaglio.NOME_PIANTA')
-    DESCRIZIONE_PIANTA = fields.Str(attribute='dettaglio.DESCRIZIONE_PIANTA', validate=validate.Length(max=65535))
-    ID_STANZA = fields.Str(attribute='dettaglio.ID_STANZA')
-    NOME_STANZA = fields.Str(attribute='stanza.NOME_STANZA')
-    POSIZIONE_STANZA_X = fields.Int(attribute='dettaglio.POSIZIONE_STANZA_X')
-    POSIZIONE_STANZA_Y = fields.Int(attribute='dettaglio.POSIZIONE_STANZA_Y')
+    NOME_PIANTA = fields.Str() # attribute='dettaglio.NOME_PIANTA'
+    DESCRIZIONE_PIANTA = fields.Str(validate=validate.Length(max=65535)) # attribute='dettaglio.DESCRIZIONE_PIANTA', 
+    ID_STANZA = fields.Str() # attribute='dettaglio.ID_STANZA'
+    NOME_STANZA = fields.Str(attribute='room.NOME_STANZA')
+    POSIZIONE_STANZA_X = fields.Int() # attribute='dettaglio.POSIZIONE_STANZA_X'
+    POSIZIONE_STANZA_Y = fields.Int() # attribute='dettaglio.POSIZIONE_STANZA_Y'
 
 
 
 class ActPianteDettaglioSensoriSchema(Schema):
     # define schema for plants sensors details table
 
-    UMIDITA_CORRENTE = fields.Int(attribute='dettaglio_sensori.UMIDITA_CORRENTE')
-    ACQUA_ULTIMA_INNAFFIATURA = fields.Int(attribute='dettaglio_sensori.ACQUA_ULTIMA_INNAFFIATURA')
-    ALTRO_DATO_SENSORI_1 = fields.Decimal(attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_1', as_string=True, places=2)
-    ALTRO_DATO_SENSORI_2 = fields.Decimal(attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_2', as_string=True, places=2)
-    ALTRO_DATO_SENSORI_3 = fields.Decimal(attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_3', as_string=True, places=2)
-    ALTRO_DATO_SENSORI_4 = fields.Decimal(attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_4', as_string=True, places=2)
+    UMIDITA_CORRENTE = fields.Int() # attribute='dettaglio_sensori.UMIDITA_CORRENTE'
+    ACQUA_ULTIMA_INNAFFIATURA = fields.Int() # attribute='dettaglio_sensori.ACQUA_ULTIMA_INNAFFIATURA'
+    ALTRO_DATO_SENSORI_1 = fields.Decimal(as_string=True, places=2) # attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_1', 
+    ALTRO_DATO_SENSORI_2 = fields.Decimal(as_string=True, places=2) # attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_2', 
+    ALTRO_DATO_SENSORI_3 = fields.Decimal(as_string=True, places=2) # attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_3', 
+    ALTRO_DATO_SENSORI_4 = fields.Decimal(as_string=True, places=2) # attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_4', 
 
 
 
@@ -32,24 +32,23 @@ class ActPianteSchema(Schema):
     ID_PIANTA = fields.Str()
     
     ID_STATO_PIANTA = fields.Str()
-    NOME_STATO = fields.Str(attribute='stato.NOME_STATO')
-    DESCRIZIONE_STATO = fields.Str(attribute='stato.DESCRIZIONE_STATO')
+    NOME_STATO = fields.Str(attribute='status.NOME_STATO')
+    DESCRIZIONE_STATO = fields.Str(attribute='status.DESCRIZIONE_STATO')
 
     ID_ULTIMO_PROGRAMMA_ESEGUITO = fields.Str()
-    NOME_PROGRAMMA = fields.Str(attribute='programma.NOME_PROGRAMMA')
-    ORARIO_INIZIO_PROGRAMMA = fields.Time(attribute='programma.ORARIO_INIZIO_PROGRAMMA')
-    ORARIO_FINE_PROGRAMMA = fields.Time(attribute='programma.ORARIO_FINE_PROGRAMMA')
-
-    DATA_ULTIMA_MODIFICA = fields.DateTime()
-    DATA_INSERIMENTO = fields.DateTime()
-
+    NOME_PROGRAMMA = fields.Str(attribute='schedule.NOME_PROGRAMMA')
+    ORARIO_INIZIO_PROGRAMMA = fields.Time(attribute='schedule.ORARIO_INIZIO_PROGRAMMA')
+    ORARIO_FINE_PROGRAMMA = fields.Time(attribute='schedule.ORARIO_FINE_PROGRAMMA')
 
     dettaglio = fields.Nested(ActPianteDettaglioSchema)
     dettaglioSensori = fields.Nested(
         ActPianteDettaglioSensoriSchema,
-        attribute='dettaglio_sensori',
+        attribute='dettaglioSensori',
         allow_none=True
     )
+
+    DATA_ULTIMA_MODIFICA = fields.DateTime()
+    DATA_INSERIMENTO = fields.DateTime()
 
 
 

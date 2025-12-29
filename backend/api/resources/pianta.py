@@ -2,6 +2,7 @@ import json, datetime, io, zipfile
 from flask import request, Response
 from flask_restful import Resource
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import joinedload
 from marshmallow import ValidationError
 from PIL import Image
 from api.models import db
@@ -103,16 +104,64 @@ class ActPianteResource(Resource):
         }
 
 
+        route_map = {
+            'ID_PIANTA' : None,
+            'ID_STATO_PIANTA' : None,
+            'NOME_STATO' : None,
+            'DESCRIZIONE_STATO' : None,
+            'ID_ULTIMO_PROGRAMMA_ESEGUITO' : None,
+            'NOME_PROGRAMMA' : None,
+            'ORARIO_INIZIO_PROGRAMMA' : None,
+            'ORARIO_FINE_PROGRAMMA' : None,
+            'DATA_INSERIMENTO' : None,
+            'DATA_ULTIMA_MODIFICA' : None,
+            'NOME_PIANTA' : 'dettaglio',
+            'DESCRIZIONE_PIANTA' : 'dettaglio',
+            'ID_STANZA' : 'dettaglio',
+            'NOME_STANZA' : 'dettaglio',
+            'POSIZIONE_STANZA_X' : 'dettaglio',
+            'POSIZIONE_STANZA_Y' : 'dettaglio',
+            'UMIDITA_CORRENTE' : 'dettaglioSensori',
+            'ACQUA_ULTIMA_INNAFFIATURA' : 'dettaglioSensori',
+            'ALTRO_DATO_SENSORI_1' : 'dettaglioSensori',
+            'ALTRO_DATO_SENSORI_2' : 'dettaglioSensori',
+            'ALTRO_DATO_SENSORI_3' : 'dettaglioSensori',
+            'ALTRO_DATO_SENSORI_4' : 'dettaglioSensori'
+        }
+
+
         
         # fields to be returned can be chosen both if ID is None or populated
         fields = request.args.get('fields', default=None, type=str)
+        filteredSchema = None
+        only = []
+        seen = set()
 
         if fields is None:
-            fields = all_plant_fields
+            """ fields = all_plant_fields """
         else:
             # get the fields list from the REST API invoke and associate them with the ones in the map
+            """ fields = [field.strip() for field in fields.split(',') if field.strip()]
+            fields = [fields_map[name].label(name) for name in fields if name in fields_map] """
+            """ filteredSchema = ActPianteSchema(many=True, only=fields) """
+            """ fields = [field.strip() for field in fields.split(',') if field.strip()]
+            # fields.add(field if fields_map.get(field) is None else [fields_map.get(field), f"{fields_map.get(field)}.{field}"] for field in fields)
+            # only.update(field if (route := fields_map.get(field)) is None else [route, f"{route}.{field}"] for field in fields)
+            only = {item for field in fields for item in ((field,) if route_map.get(field) is None else (route_map[field], f"{route_map[field]}.{field}"))} """
+            """ for field in fields:
+                route = route_map.get(field)
+
+                if route is None:
+                    only.add(field)
+                else:
+                    only.add(route)
+                    only.add(f"{route}.{field}") """
             fields = [field.strip() for field in fields.split(',') if field.strip()]
-            fields = [fields_map[name].label(name) for name in fields if name in fields_map]
+            only = list(dict.fromkeys(item for field in fields for item in (
+                        (field,) if route_map.get(field) is None else (route_map[field], f"{route_map[field]}.{field}"))
+                    ))
+
+
 
 
         # if ID does not exist, get all plants
@@ -132,23 +181,44 @@ class ActPianteResource(Resource):
 
                 # query construction:
                 #   with_entities filters the query showing only the fields specified in the fields array
-                plants = ActPianteTestataModel.query\
+                """ plants = ActPianteTestataModel.query\
                             .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                             .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
                             .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
                             .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO)\
                             .join(LookupStanzeModel, LookupStanzeModel.ID_STANZA == ActPianteDettaglioModel.ID_STANZA)\
                             .with_entities(*fields)\
+                            .order_by(fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else fields_map.get(orderBy[0]).asc()) """
+                
+
+                """ plants = ActPianteTestataModel.query\
+                            .options(joinedload(ActPianteTestataModel.dettaglio).joinedload(ActPianteDettaglioModel.room),
+                                        joinedload(ActPianteTestataModel.dettaglioSensori),
+                                        joinedload(ActPianteTestataModel.status),
+                                        joinedload(ActPianteTestataModel.schedule)
+                            )\
+                            .order_by(fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else fields_map.get(orderBy[0]).asc()) """
+                
+
+                plants = ActPianteTestataModel.query\
+                            .options(joinedload(ActPianteTestataModel.dettaglio).joinedload(ActPianteDettaglioModel.stanza))\
+                            .options(joinedload(ActPianteTestataModel.dettaglioSensori))\
+                            .options(joinedload(ActPianteTestataModel.stato))\
+                            .options(joinedload(ActPianteTestataModel.programma))\
                             .order_by(fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else fields_map.get(orderBy[0]).asc())
                 
                 
                 pagination = plants.paginate(page=page, per_page=limit, error_out=False)
+                schema = ActPianteSchema(
+                    many=True,
+                    only=list(only) #fields.split(',') if fields else None
+                )
                 plantsArray = pagination.items
                 totalItems = pagination.total
                 totalPages = pagination.pages
                 hasMore = pagination.has_next
                 return {
-                    "piante": many_plants_schema.dump(plantsArray),
+                    "piante": schema.dump(plantsArray),
                     "count": len(plantsArray),
                     "hasMore": hasMore,
                     "page": page,
@@ -156,8 +226,8 @@ class ActPianteResource(Resource):
                     "totalPages": totalPages,
                     "totalItems": totalItems
                 }, 200
-            except SQLAlchemyError:
-                return {"message": "Errore durante il recupero delle piante"}, 500
+            except SQLAlchemyError as e:
+                return {"message": "Errore durante il recupero delle piante - " + str(e)}, 500
         
         # else if ID is not null, get the one plant corresponding to the ID
         try:
@@ -185,7 +255,7 @@ class ActPianteResource(Resource):
     
 
 
-    # plant creation is implemented with multipart form-data
+    """ # plant creation is implemented with multipart form-data
     def post(self):
 
         # get JSON request payload with all fields except for the photo
@@ -213,7 +283,7 @@ class ActPianteResource(Resource):
         )
         
         # create a new model for plant details, because it does not exist in the database yet
-        newPlant.dettaglio = ActPianteDettaglioModel(
+        newPlant.detail = ActPianteDettaglioModel(
             ID_PIANTA=newPlant.ID_PIANTA,
             NOME_PIANTA=jsonRequestPayload.get('NOME_PIANTA'),
             DESCRIZIONE_PIANTA=jsonRequestPayload.get('DESCRIZIONE_PIANTA'),
@@ -226,7 +296,7 @@ class ActPianteResource(Resource):
 
         try:
             db.session.add(newPlant)
-            db.session.add(newPlant.dettaglio)
+            db.session.add(newPlant.detail)
             db.session.commit()
         except SQLAlchemyError:
             db.session.rollback()
@@ -384,7 +454,7 @@ class ActPianteResource(Resource):
             return {"message": "Pianta eliminata"}, 204
         except SQLAlchemyError:
             db.session.rollback()
-            return {"message": "Errore durante la cancellazione della pianta"}, 500
+            return {"message": "Errore durante la cancellazione della pianta"}, 500 """
 
 
 
