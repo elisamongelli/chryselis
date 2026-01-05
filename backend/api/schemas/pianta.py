@@ -17,12 +17,12 @@ class ActPianteDettaglioSchema(Schema):
 class ActPianteDettaglioSensoriSchema(Schema):
     # define schema for plants sensors details table
 
-    UMIDITA_CORRENTE = fields.Int() # attribute='dettaglio_sensori.UMIDITA_CORRENTE'
-    ACQUA_ULTIMA_INNAFFIATURA = fields.Int() # attribute='dettaglio_sensori.ACQUA_ULTIMA_INNAFFIATURA'
-    ALTRO_DATO_SENSORI_1 = fields.Decimal(as_string=True, places=2) # attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_1', 
-    ALTRO_DATO_SENSORI_2 = fields.Decimal(as_string=True, places=2) # attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_2', 
-    ALTRO_DATO_SENSORI_3 = fields.Decimal(as_string=True, places=2) # attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_3', 
-    ALTRO_DATO_SENSORI_4 = fields.Decimal(as_string=True, places=2) # attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_4', 
+    UMIDITA_CORRENTE = fields.Int(allow_none=True) # attribute='dettaglio_sensori.UMIDITA_CORRENTE'
+    ACQUA_ULTIMA_INNAFFIATURA = fields.Int(allow_none=True) # attribute='dettaglio_sensori.ACQUA_ULTIMA_INNAFFIATURA'
+    ALTRO_DATO_SENSORI_1 = fields.Decimal(as_string=True, places=2, allow_none=True) # attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_1', 
+    ALTRO_DATO_SENSORI_2 = fields.Decimal(as_string=True, places=2, allow_none=True) # attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_2', 
+    ALTRO_DATO_SENSORI_3 = fields.Decimal(as_string=True, places=2, allow_none=True) # attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_3', 
+    ALTRO_DATO_SENSORI_4 = fields.Decimal(as_string=True, places=2, allow_none=True) # attribute='dettaglio_sensori.ALTRO_DATO_SENSORI_4', 
 
 
 

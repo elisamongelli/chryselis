@@ -330,23 +330,24 @@ class ActPianteResource(Resource):
                           'ALTRO_DATO_SENSORI_3',
                           'ALTRO_DATO_SENSORI_4']
         # scroll the validFields dictionary
-        #   key contains the header table's field or the table itself, like "dettaglio" and "dettaglio_sensori"
+        #   key contains the header table's field or the table itself, like "dettaglio" and "dettaglioSensori"
         #   value contains the corresponding value or the json payload with all the fields of the current table
         if validFields is not None:
             for key, value in validFields.items():
+                print("Key: " + key + "\nValue: " + value)
                 # if current table is the header table, key will be the specific field
                 if key in allowedFields:
                     setattr(plant, key, value)
                 else:
                     # get the relationship between header plant and its details
                     plantRelationship = getattr(plant, key)
-                    # when the key is "dettaglio_sensori" the relationship might not exist
+                    # when the key is "dettaglioSensori" the relationship might not exist
                     #   because it's not created during the plant creation
-                    if key == 'dettaglio_sensori' and plantRelationship is None:
+                    if key == 'dettaglioSensori' and plantRelationship is None:
                         try:
                             # initialize the relationship between header plant and sensors details
                             plantRelationship = ActPianteDettaglioSensoriModel(
-                                ID_PIANTA=plantID,
+                                # ID_PIANTA=plantID,
                                 UMIDITA_CORRENTE=None,
                                 ACQUA_ULTIMA_INNAFFIATURA=None,
                                 ALTRO_DATO_SENSORI_1=None,
@@ -354,7 +355,7 @@ class ActPianteResource(Resource):
                                 ALTRO_DATO_SENSORI_3=None,
                                 ALTRO_DATO_SENSORI_4=None
                             )
-                            plant.dettaglio_sensori = plantRelationship
+                            plant.dettaglioSensori = plantRelationship
                             db.session.add(plantRelationship)
                         except SQLAlchemyError:
                             db.session.rollback()
@@ -375,14 +376,12 @@ class ActPianteResource(Resource):
             db.session.rollback()
             return {"message": "Errore durante l'aggiornamento della pianta"}, 500
         
-        # gets the updated plant
+        # get the updated plant
         entirePlant = ActPianteTestataModel.query\
-                            .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                            .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                            .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
-                            .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO)\
-                            .join(LookupStanzeModel, LookupStanzeModel.ID_STANZA == ActPianteDettaglioModel.ID_STANZA)\
-                            .with_entities(*all_plant_fields)\
+                            .options(joinedload(ActPianteTestataModel.dettaglio).joinedload(ActPianteDettaglioModel.stanza))\
+                            .options(joinedload(ActPianteTestataModel.dettaglioSensori))\
+                            .options(joinedload(ActPianteTestataModel.status))\
+                            .options(joinedload(ActPianteTestataModel.schedule))\
                             .filter(ActPianteTestataModel.ID_PIANTA == plantID)\
                             .first()
 
