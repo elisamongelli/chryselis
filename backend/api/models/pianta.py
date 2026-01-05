@@ -30,12 +30,12 @@ class ActPianteTestataModel(db.Model):
     )
 
 
-    stato = db.relationship(
+    status = db.relationship(
         'LookupStatiModel'
     )
 
 
-    programma = db.relationship(
+    schedule = db.relationship(
         'LookupProgrammiModel'
     )
 

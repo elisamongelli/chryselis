@@ -105,28 +105,28 @@ class ActPianteResource(Resource):
 
 
         route_map = {
-            'ID_PIANTA' : None,
-            'ID_STATO_PIANTA' : None,
-            'NOME_STATO' : None,
-            'DESCRIZIONE_STATO' : None,
-            'ID_ULTIMO_PROGRAMMA_ESEGUITO' : None,
-            'NOME_PROGRAMMA' : None,
-            'ORARIO_INIZIO_PROGRAMMA' : None,
-            'ORARIO_FINE_PROGRAMMA' : None,
-            'DATA_INSERIMENTO' : None,
-            'DATA_ULTIMA_MODIFICA' : None,
-            'NOME_PIANTA' : 'dettaglio',
-            'DESCRIZIONE_PIANTA' : 'dettaglio',
-            'ID_STANZA' : 'dettaglio',
-            'NOME_STANZA' : 'dettaglio',
-            'POSIZIONE_STANZA_X' : 'dettaglio',
-            'POSIZIONE_STANZA_Y' : 'dettaglio',
-            'UMIDITA_CORRENTE' : 'dettaglioSensori',
-            'ACQUA_ULTIMA_INNAFFIATURA' : 'dettaglioSensori',
-            'ALTRO_DATO_SENSORI_1' : 'dettaglioSensori',
-            'ALTRO_DATO_SENSORI_2' : 'dettaglioSensori',
-            'ALTRO_DATO_SENSORI_3' : 'dettaglioSensori',
-            'ALTRO_DATO_SENSORI_4' : 'dettaglioSensori'
+            # 'ID_PIANTA': None,
+            # 'ID_STATO_PIANTA': None,
+            # 'NOME_STATO': None,
+            # 'DESCRIZIONE_STATO': None,
+            # 'ID_ULTIMO_PROGRAMMA_ESEGUITO': None,
+            # 'NOME_PROGRAMMA': None,
+            # 'ORARIO_INIZIO_PROGRAMMA': None,
+            # 'ORARIO_FINE_PROGRAMMA': None,
+            # 'DATA_INSERIMENTO': None,
+            # 'DATA_ULTIMA_MODIFICA': None,
+            'NOME_PIANTA': 'dettaglio',
+            'DESCRIZIONE_PIANTA': 'dettaglio',
+            'ID_STANZA': 'dettaglio',
+            'NOME_STANZA': 'dettaglio',
+            'POSIZIONE_STANZA_X': 'dettaglio',
+            'POSIZIONE_STANZA_Y': 'dettaglio',
+            'UMIDITA_CORRENTE': 'dettaglioSensori',
+            'ACQUA_ULTIMA_INNAFFIATURA': 'dettaglioSensori',
+            'ALTRO_DATO_SENSORI_1': 'dettaglioSensori',
+            'ALTRO_DATO_SENSORI_2': 'dettaglioSensori',
+            'ALTRO_DATO_SENSORI_3': 'dettaglioSensori',
+            'ALTRO_DATO_SENSORI_4': 'dettaglioSensori',
         }
 
 
@@ -136,6 +136,7 @@ class ActPianteResource(Resource):
         filteredSchema = None
         only = []
         seen = set()
+        # only = set()
 
         if fields is None:
             """ fields = all_plant_fields """
@@ -156,10 +157,54 @@ class ActPianteResource(Resource):
                 else:
                     only.add(route)
                     only.add(f"{route}.{field}") """
-            fields = [field.strip() for field in fields.split(',') if field.strip()]
+            """ fields = [field.strip() for field in fields.split(',') if field.strip()]
             only = list(dict.fromkeys(item for field in fields for item in (
                         (field,) if route_map.get(field) is None else (route_map[field], f"{route_map[field]}.{field}"))
-                    ))
+                    )) """
+            """ fields = [field.strip() for field in fields.split(',') if field.strip()]
+            nestedNeeded = set(route_map[field] for field in fields if route_map.get(field))
+            only = [
+                'ID_PIANTA',
+                'ID_STATO_PIANTA',
+                'NOME_STATO',
+                'DESCRIZIONE_STATO',
+                'ID_ULTIMO_PROGRAMMA_ESEGUITO',
+                'NOME_PROGRAMMA',
+                'ORARIO_INIZIO_PROGRAMMA',
+                'ORARIO_FINE_PROGRAMMA',
+                'DATA_INSERIMENTO',
+                'DATA_ULTIMA_MODIFICA',
+                *nestedNeeded
+            ] """
+            """ fields = [field.strip() for field in fields.split(',') if field.strip()]
+            for field in fields:
+                route = route_map.get(field)
+                # nested field (from detail table or sensors detail table)
+                if route is None:
+                    if field not in seen:
+                        only.append(field)
+                        seen.add(field)
+
+                # root field (header table field or lookup table field)
+                else:
+                    if route not in seen:
+                        only.append(route)
+                        seen.add(route)
+
+                    only.append(f"{route}.{field}") """
+            fields = [field.strip() for field in fields.split(',') if field.strip()]
+            schemaFields = ActPianteSchema().fields
+            for schemaField in schemaFields:
+                # root field (header table field or lookup table field)
+                if schemaField in fields:
+                    only.append(schemaField)
+                # nested field (from detail table or sensors detail table)
+                for field in fields:
+                    route = route_map.get(field)
+                    if route == schemaField:
+                        if schemaField not in only:
+                            only.append(schemaField)
+                        only.append(f"{schemaField}.{field}")
 
 
 
@@ -203,15 +248,15 @@ class ActPianteResource(Resource):
                 plants = ActPianteTestataModel.query\
                             .options(joinedload(ActPianteTestataModel.dettaglio).joinedload(ActPianteDettaglioModel.stanza))\
                             .options(joinedload(ActPianteTestataModel.dettaglioSensori))\
-                            .options(joinedload(ActPianteTestataModel.stato))\
-                            .options(joinedload(ActPianteTestataModel.programma))\
+                            .options(joinedload(ActPianteTestataModel.status))\
+                            .options(joinedload(ActPianteTestataModel.schedule))\
                             .order_by(fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else fields_map.get(orderBy[0]).asc())
                 
                 
                 pagination = plants.paginate(page=page, per_page=limit, error_out=False)
                 schema = ActPianteSchema(
                     many=True,
-                    only=list(only) #fields.split(',') if fields else None
+                    only=only #fields.split(',') if fields else None
                 )
                 plantsArray = pagination.items
                 totalItems = pagination.total
