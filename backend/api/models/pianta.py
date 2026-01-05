@@ -18,15 +18,17 @@ class ActPianteTestataModel(db.Model):
 
     dettaglio = db.relationship(
         'ActPianteDettaglioModel',
-        backref = 'header',
-        uselist = False
+        back_populates = 'header',
+        uselist = False,
+        cascade = 'all, delete-orphan'
     )
 
 
     dettaglioSensori = db.relationship(
         'ActPianteDettaglioSensoriModel',
-        backref = 'header',
-        uselist = False
+        back_populates = 'header',
+        uselist = False,
+        cascade = 'all, delete-orphan'
     )
 
 
@@ -71,13 +73,19 @@ class ActPianteDettaglioModel(db.Model):
     POSIZIONE_STANZA_Y = db.Column(db.Integer)
 
 
+    header = db.relationship(
+        'ActPianteTestataModel',
+        back_populates = 'dettaglio'
+    )
+
+
     stanza = db.relationship(
         'LookupStanzeModel'
     )
 
 
     # class constructor
-    def __init__(self, ID_PIANTA, NOME_PIANTA, DESCRIZIONE_PIANTA, FOTO_PIANTA, ID_STANZA, POSIZIONE_STANZA_X, POSIZIONE_STANZA_Y):
+    def __init__(self, NOME_PIANTA, DESCRIZIONE_PIANTA, FOTO_PIANTA, ID_STANZA, POSIZIONE_STANZA_X, POSIZIONE_STANZA_Y, ID_PIANTA=None):
         # ID will be taken from the testata table
         self.ID_PIANTA = ID_PIANTA
         self.NOME_PIANTA = NOME_PIANTA
@@ -109,8 +117,14 @@ class ActPianteDettaglioSensoriModel(db.Model):
     ALTRO_DATO_SENSORI_4 = db.Column(db.Numeric(5,2))
 
 
+    header = db.relationship(
+        'ActPianteTestataModel',
+        back_populates = 'dettaglioSensori'
+    )
+
+
     # class constructor
-    def __init__(self, ID_PIANTA, UMIDITA_CORRENTE, ACQUA_ULTIMA_INNAFFIATURA, ALTRO_DATO_SENSORI_1, ALTRO_DATO_SENSORI_2, ALTRO_DATO_SENSORI_3, ALTRO_DATO_SENSORI_4):
+    def __init__(self, UMIDITA_CORRENTE, ACQUA_ULTIMA_INNAFFIATURA, ALTRO_DATO_SENSORI_1, ALTRO_DATO_SENSORI_2, ALTRO_DATO_SENSORI_3, ALTRO_DATO_SENSORI_4, ID_PIANTA=None):
         self.ID_PIANTA = ID_PIANTA
         self.UMIDITA_CORRENTE = UMIDITA_CORRENTE
         self.ACQUA_ULTIMA_INNAFFIATURA = ACQUA_ULTIMA_INNAFFIATURA

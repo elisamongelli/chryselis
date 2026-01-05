@@ -77,8 +77,8 @@ class ActPianteResource(Resource):
     def get(self, plantID=None):
 
 
-        # the map helps the fields attribute during REST API invoke to not write the model for each field
-        fields_map = {
+        # the map helps the orderBy attribute during REST API invoke to not write the model for each field
+        orderByAttribute_fields_map = {
             'ID_PIANTA' : ActPianteTestataModel.ID_PIANTA,
             'ID_STATO_PIANTA' : ActPianteTestataModel.ID_STATO_PIANTA,
             'NOME_STATO' : LookupStatiModel.NOME_STATO,
@@ -103,18 +103,9 @@ class ActPianteResource(Resource):
             'ALTRO_DATO_SENSORI_4' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4
         }
 
-
-        route_map = {
-            # 'ID_PIANTA': None,
-            # 'ID_STATO_PIANTA': None,
-            # 'NOME_STATO': None,
-            # 'DESCRIZIONE_STATO': None,
-            # 'ID_ULTIMO_PROGRAMMA_ESEGUITO': None,
-            # 'NOME_PROGRAMMA': None,
-            # 'ORARIO_INIZIO_PROGRAMMA': None,
-            # 'ORARIO_FINE_PROGRAMMA': None,
-            # 'DATA_INSERIMENTO': None,
-            # 'DATA_ULTIMA_MODIFICA': None,
+        
+        # the map helps the fields attribute during REST API invoke to not write the entity for each nested field (detail and sensors detail)
+        fieldsAttribute_fields_map = {
             'NOME_PIANTA': 'dettaglio',
             'DESCRIZIONE_PIANTA': 'dettaglio',
             'ID_STANZA': 'dettaglio',
@@ -133,78 +124,25 @@ class ActPianteResource(Resource):
         
         # fields to be returned can be chosen both if ID is None or populated
         fields = request.args.get('fields', default=None, type=str)
-        filteredSchema = None
-        only = []
-        seen = set()
-        # only = set()
+        queryFields = []
 
-        if fields is None:
-            """ fields = all_plant_fields """
-        else:
+        if fields is not None:
             # get the fields list from the REST API invoke and associate them with the ones in the map
-            """ fields = [field.strip() for field in fields.split(',') if field.strip()]
-            fields = [fields_map[name].label(name) for name in fields if name in fields_map] """
-            """ filteredSchema = ActPianteSchema(many=True, only=fields) """
-            """ fields = [field.strip() for field in fields.split(',') if field.strip()]
-            # fields.add(field if fields_map.get(field) is None else [fields_map.get(field), f"{fields_map.get(field)}.{field}"] for field in fields)
-            # only.update(field if (route := fields_map.get(field)) is None else [route, f"{route}.{field}"] for field in fields)
-            only = {item for field in fields for item in ((field,) if route_map.get(field) is None else (route_map[field], f"{route_map[field]}.{field}"))} """
-            """ for field in fields:
-                route = route_map.get(field)
-
-                if route is None:
-                    only.add(field)
-                else:
-                    only.add(route)
-                    only.add(f"{route}.{field}") """
-            """ fields = [field.strip() for field in fields.split(',') if field.strip()]
-            only = list(dict.fromkeys(item for field in fields for item in (
-                        (field,) if route_map.get(field) is None else (route_map[field], f"{route_map[field]}.{field}"))
-                    )) """
-            """ fields = [field.strip() for field in fields.split(',') if field.strip()]
-            nestedNeeded = set(route_map[field] for field in fields if route_map.get(field))
-            only = [
-                'ID_PIANTA',
-                'ID_STATO_PIANTA',
-                'NOME_STATO',
-                'DESCRIZIONE_STATO',
-                'ID_ULTIMO_PROGRAMMA_ESEGUITO',
-                'NOME_PROGRAMMA',
-                'ORARIO_INIZIO_PROGRAMMA',
-                'ORARIO_FINE_PROGRAMMA',
-                'DATA_INSERIMENTO',
-                'DATA_ULTIMA_MODIFICA',
-                *nestedNeeded
-            ] """
-            """ fields = [field.strip() for field in fields.split(',') if field.strip()]
-            for field in fields:
-                route = route_map.get(field)
-                # nested field (from detail table or sensors detail table)
-                if route is None:
-                    if field not in seen:
-                        only.append(field)
-                        seen.add(field)
-
-                # root field (header table field or lookup table field)
-                else:
-                    if route not in seen:
-                        only.append(route)
-                        seen.add(route)
-
-                    only.append(f"{route}.{field}") """
             fields = [field.strip() for field in fields.split(',') if field.strip()]
+            # get all fields from the schema to order those in the response JSON payload
             schemaFields = ActPianteSchema().fields
             for schemaField in schemaFields:
                 # root field (header table field or lookup table field)
                 if schemaField in fields:
-                    only.append(schemaField)
+                    queryFields.append(schemaField)
                 # nested field (from detail table or sensors detail table)
                 for field in fields:
-                    route = route_map.get(field)
-                    if route == schemaField:
-                        if schemaField not in only:
-                            only.append(schemaField)
-                        only.append(f"{schemaField}.{field}")
+                    # get the current field with its model
+                    modelField = fieldsAttribute_fields_map.get(field)
+                    # if current field is in the schema
+                    if modelField == schemaField:
+                        queryFields.append(schemaField)
+                        queryFields.append(f"{schemaField}.{field}")
 
 
 
@@ -225,39 +163,17 @@ class ActPianteResource(Resource):
                 
 
                 # query construction:
-                #   with_entities filters the query showing only the fields specified in the fields array
-                """ plants = ActPianteTestataModel.query\
-                            .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                            .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                            .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
-                            .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO)\
-                            .join(LookupStanzeModel, LookupStanzeModel.ID_STANZA == ActPianteDettaglioModel.ID_STANZA)\
-                            .with_entities(*fields)\
-                            .order_by(fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else fields_map.get(orderBy[0]).asc()) """
-                
-
-                """ plants = ActPianteTestataModel.query\
-                            .options(joinedload(ActPianteTestataModel.dettaglio).joinedload(ActPianteDettaglioModel.room),
-                                        joinedload(ActPianteTestataModel.dettaglioSensori),
-                                        joinedload(ActPianteTestataModel.status),
-                                        joinedload(ActPianteTestataModel.schedule)
-                            )\
-                            .order_by(fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else fields_map.get(orderBy[0]).asc()) """
-                
-
                 plants = ActPianteTestataModel.query\
                             .options(joinedload(ActPianteTestataModel.dettaglio).joinedload(ActPianteDettaglioModel.stanza))\
                             .options(joinedload(ActPianteTestataModel.dettaglioSensori))\
                             .options(joinedload(ActPianteTestataModel.status))\
                             .options(joinedload(ActPianteTestataModel.schedule))\
-                            .order_by(fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else fields_map.get(orderBy[0]).asc())
+                            .order_by(orderByAttribute_fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else orderByAttribute_fields_map.get(orderBy[0]).asc())
                 
                 
                 pagination = plants.paginate(page=page, per_page=limit, error_out=False)
-                schema = ActPianteSchema(
-                    many=True,
-                    only=only #fields.split(',') if fields else None
-                )
+                # get only fields specified in the queryFields list from the schema or all fields
+                schema = ActPianteSchema(many=True, only=queryFields if queryFields else None)
                 plantsArray = pagination.items
                 totalItems = pagination.total
                 totalPages = pagination.pages
@@ -273,19 +189,17 @@ class ActPianteResource(Resource):
                 }, 200
             except SQLAlchemyError as e:
                 return {"message": "Errore durante il recupero delle piante - " + str(e)}, 500
-        
+
+
         # else if ID is not null, get the one plant corresponding to the ID
         try:
             # query construction:
-            #   with_entities filters the query showing only the fields specified in the fields array
             #   filter shows the only plant with the ID specified in the path
             plant = ActPianteTestataModel.query\
-                        .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                        .outerjoin(ActPianteDettaglioSensoriModel, ActPianteDettaglioSensoriModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                        .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
-                        .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO)\
-                        .join(LookupStanzeModel, LookupStanzeModel.ID_STANZA == ActPianteDettaglioModel.ID_STANZA)\
-                        .with_entities(*fields)\
+                        .options(joinedload(ActPianteTestataModel.dettaglio).joinedload(ActPianteDettaglioModel.stanza))\
+                        .options(joinedload(ActPianteTestataModel.dettaglioSensori))\
+                        .options(joinedload(ActPianteTestataModel.status))\
+                        .options(joinedload(ActPianteTestataModel.schedule))\
                         .filter(ActPianteTestataModel.ID_PIANTA == plantID)\
                         .first()
         except SQLAlchemyError:
@@ -293,14 +207,15 @@ class ActPianteResource(Resource):
 
         # if the plant has been retrieve successfully from the DB
         if plant:
-            return one_plant_schema.dump(plant), 200
+            schema = ActPianteSchema(only=queryFields if queryFields else None)
+            return schema.dump(plant), 200
 
         # else return 404 error, plant not found
         return {"message": "Pianta non trovata"}, 404
     
 
 
-    """ # plant creation is implemented with multipart form-data
+    # plant creation is implemented with multipart form-data
     def post(self):
 
         # get JSON request payload with all fields except for the photo
@@ -328,8 +243,7 @@ class ActPianteResource(Resource):
         )
         
         # create a new model for plant details, because it does not exist in the database yet
-        newPlant.detail = ActPianteDettaglioModel(
-            ID_PIANTA=newPlant.ID_PIANTA,
+        newPlant.dettaglio = ActPianteDettaglioModel(
             NOME_PIANTA=jsonRequestPayload.get('NOME_PIANTA'),
             DESCRIZIONE_PIANTA=jsonRequestPayload.get('DESCRIZIONE_PIANTA'),
             FOTO_PIANTA=photoBytes,
@@ -341,7 +255,6 @@ class ActPianteResource(Resource):
 
         try:
             db.session.add(newPlant)
-            db.session.add(newPlant.detail)
             db.session.commit()
         except SQLAlchemyError:
             db.session.rollback()
@@ -349,11 +262,9 @@ class ActPianteResource(Resource):
         
         # get the created plant
         entirePlant = ActPianteTestataModel.query\
-                        .join(ActPianteDettaglioModel, ActPianteDettaglioModel.ID_PIANTA == ActPianteTestataModel.ID_PIANTA)\
-                        .join(LookupStatiModel, LookupStatiModel.ID_STATO == ActPianteTestataModel.ID_STATO_PIANTA)\
-                        .join(LookupProgrammiModel, LookupProgrammiModel.ID_PROGRAMMA == ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO)\
-                        .join(LookupStanzeModel, LookupStanzeModel.ID_STANZA == ActPianteDettaglioModel.ID_STANZA)\
-                        .with_entities(*all_plant_fields_without_sensors)\
+                        .options(joinedload(ActPianteTestataModel.dettaglio).joinedload(ActPianteDettaglioModel.stanza))\
+                        .options(joinedload(ActPianteTestataModel.status))\
+                        .options(joinedload(ActPianteTestataModel.schedule))\
                         .filter(ActPianteTestataModel.ID_PIANTA == newPlant.ID_PIANTA)\
                         .first()
 
@@ -361,6 +272,7 @@ class ActPianteResource(Resource):
 
 
 
+    # plant update is implemented with multipart form-data
     def patch(self, plantID):
         
         # get the one plant from the DB with the corresponding ID
@@ -478,7 +390,7 @@ class ActPianteResource(Resource):
     
 
 
-    def delete(self, plantID):
+    """ def delete(self, plantID):
 
         # get the one plant from the DB with the corresponding ID
         plant = ActPianteTestataModel.query.get(plantID)
