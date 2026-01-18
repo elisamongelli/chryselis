@@ -274,6 +274,30 @@ class ActPianteResource(Resource):
 
     # plant update is implemented with multipart form-data
     def patch(self, plantID):
+
+
+        headerFields = {
+            'ID_STATO_PIANTA',
+            'ID_ULTIMO_PROGRAMMA_ESEGUITO'
+        }
+
+        detailsFields = {
+            'NOME_PIANTA',
+            'DESCRIZIONE_PIANTA',
+            'ID_STANZA',
+            'POSIZIONE_STANZA_X',
+            'POSIZIONE_STANZA_Y'
+        }
+
+        sensorsDetailsFields = {
+            'UMIDITA_CORRENTE',
+            'ACQUA_ULTIMA_INNAFFIATURA',
+            'ALTRO_DATO_SENSORI_1',
+            'ALTRO_DATO_SENSORI_2',
+            'ALTRO_DATO_SENSORI_3',
+            'ALTRO_DATO_SENSORI_4'
+        }
+
         
         # get the one plant from the DB with the corresponding ID
         plant = ActPianteTestataModel.query.get(plantID)
@@ -306,37 +330,54 @@ class ActPianteResource(Resource):
 
         validFields=None
         try:
+
+            headerJsonPayload = {}
+            detailsJsonPayload = {}
+            sensorsDetailsJsonPayload = {}
+            
+            for key, value in jsonRequestPayload.items():
+                print("Key = " + key)
+                if key in headerFields:
+                    headerJsonPayload[key] = value
+                    print("Header field: " + key)
+                elif key in detailsFields:
+                    detailsJsonPayload[key] = value
+                    print("Details field: " + key)
+                elif key in sensorsDetailsFields:
+                    sensorsDetailsJsonPayload[key] = value
+                    print("Sensors details feild: " + key)
+            
+
+            # marshmallow format payload, separating header, details and sensors details
+            marshmallowPayload = dict(headerJsonPayload)
+            if detailsJsonPayload:
+                print("Details payload is not none")
+                marshmallowPayload['dettaglio'] = detailsJsonPayload
+            if sensorsDetailsJsonPayload:
+                print("Sensors details payload is not none")
+                marshmallowPayload['dettaglioSensori'] = sensorsDetailsJsonPayload
+            
+
             # load method returnes a dictionary with all the valid fields
             #   if a field has a wrong data type or does not exist on DB table, it throws a ValidationError
             #   partial=True allows to accept a JSON request payload with only a subset of fields
-            if jsonRequestPayload is not None:
-                validFields = one_plant_schema.load(jsonRequestPayload, partial=True)
-        except ValidationError:
+            if marshmallowPayload is not None:
+                validFields = one_plant_schema.load(marshmallowPayload, partial=True)
+        except ValidationError as err:
             return {"message": "I valori inseriti per la modifica della pianta non sono validi"}, 400
         
         
-        # set the allowed fields and update only them on DB
-        allowedFields = ['NOME_PIANTA',
-                          'DESCRIZIONE_PIANTA',
-                          'ID_STATO_PIANTA',
-                          'ID_STANZA',
-                          'POSIZIONE_STANZA_X',
-                          'POSIZIONE_STANZA_Y',
-                          'ID_ULTIMO_PROGRAMMA_ESEGUITO',
-                          'UMIDITA_CORRENTE',
-                          'ACQUA_ULTIMA_INNAFFIATURA',
-                          'ALTRO_DATO_SENSORI_1',
-                          'ALTRO_DATO_SENSORI_2',
-                          'ALTRO_DATO_SENSORI_3',
-                          'ALTRO_DATO_SENSORI_4']
+        
         # scroll the validFields dictionary
         #   key contains the header table's field or the table itself, like "dettaglio" and "dettaglioSensori"
         #   value contains the corresponding value or the json payload with all the fields of the current table
-        if validFields is not None:
+        if validFields:
             for key, value in validFields.items():
-                print("Key: " + key + "\nValue: " + value)
+                print("Key: " + key)
                 # if current table is the header table, key will be the specific field
-                if key in allowedFields:
+                #   details and sensorsDetails are dictionaries, while the header only contains strings
+                #   isinstance returnes True if the value is a dictionary, False otherwise
+                if not isinstance(value, dict):
                     setattr(plant, key, value)
                 else:
                     # get the relationship between header plant and its details
@@ -346,15 +387,7 @@ class ActPianteResource(Resource):
                     if key == 'dettaglioSensori' and plantRelationship is None:
                         try:
                             # initialize the relationship between header plant and sensors details
-                            plantRelationship = ActPianteDettaglioSensoriModel(
-                                # ID_PIANTA=plantID,
-                                UMIDITA_CORRENTE=None,
-                                ACQUA_ULTIMA_INNAFFIATURA=None,
-                                ALTRO_DATO_SENSORI_1=None,
-                                ALTRO_DATO_SENSORI_2=None,
-                                ALTRO_DATO_SENSORI_3=None,
-                                ALTRO_DATO_SENSORI_4=None
-                            )
+                            plantRelationship = ActPianteDettaglioSensoriModel()
                             plant.dettaglioSensori = plantRelationship
                             db.session.add(plantRelationship)
                         except SQLAlchemyError:
@@ -362,9 +395,7 @@ class ActPianteResource(Resource):
                             return {"message": "Errore durante l'aggiornamento dei dati dei sensori"}, 500
                     # scroll the json request payload for the current table
                     for t_key, t_value in value.items():
-                        # if the current field is allowed, it updates its value
-                        if t_key in allowedFields:
-                            setattr(plantRelationship, t_key, t_value)
+                        setattr(plantRelationship, t_key, t_value)
         
 
         try:
