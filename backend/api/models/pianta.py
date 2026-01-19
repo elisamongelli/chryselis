@@ -42,6 +42,14 @@ class ActPianteTestataModel(db.Model):
     )
 
 
+    plantsSchedule = db.relationship(
+        'LookupPianteProgrammiModel',
+        back_populates = 'header',
+        uselist = True,
+        cascade = 'all, delete-orphan'
+    )
+
+
     # class constructor
     def __init__(self, ID_STATO_PIANTA, ID_ULTIMO_PROGRAMMA_ESEGUITO, ID_PIANTA=None, DATA_INSERIMENTO=None, DATA_ULTIMA_MODIFICA=None):
         # if no ID is provided, it generates a new UUID from Python to avoid INSERT errors without a default

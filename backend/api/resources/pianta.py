@@ -420,12 +420,10 @@ class ActPianteResource(Resource):
     
 
 
-    """ def delete(self, plantID):
+    def delete(self, plantID):
 
         # get the one plant from the DB with the corresponding ID
         plant = ActPianteTestataModel.query.get(plantID)
-        plantDetail = ActPianteDettaglioModel.query.get(plantID)
-        plantDetailSensors = ActPianteDettaglioSensoriModel.query.get(plantID)
 
         # if the ID is not found in the DB, return 404 error, plant not found
         if not plant:
@@ -433,15 +431,12 @@ class ActPianteResource(Resource):
 
         # else delete the plant from the DB
         try:
-            if plantDetailSensors is not None:
-                db.session.delete(plantDetailSensors)
-            db.session.delete(plantDetail)
             db.session.delete(plant)
             db.session.commit()
             return {"message": "Pianta eliminata"}, 204
-        except SQLAlchemyError:
+        except SQLAlchemyError as err:
             db.session.rollback()
-            return {"message": "Errore durante la cancellazione della pianta"}, 500 """
+            return {"message": "Errore durante la cancellazione della pianta" + str(err)}, 500
 
 
 

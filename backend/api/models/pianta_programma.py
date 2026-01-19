@@ -16,6 +16,13 @@ class LookupPianteProgrammiModel(db.Model):
     ID_PROGRAMMA = db.Column(db.String(100), db.ForeignKey('lkp_programmi.ID_PROGRAMMA'))
 
 
+    header = db.relationship(
+        'ActPianteTestataModel',
+        back_populates='plantsSchedule'
+    )
+
+
+
     # class constructor
     def __init__(self, ID_PIANTA, ID_PROGRAMMA):
         self.ID_PIANTA = ID_PIANTA
