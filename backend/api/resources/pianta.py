@@ -188,7 +188,7 @@ class ActPianteResource(Resource):
                     "totalItems": totalItems
                 }, 200
             except SQLAlchemyError as e:
-                return {"message": "Errore durante il recupero delle piante - " + str(e)}, 500
+                return {"message": "Errore durante il recupero delle piante" + str(e)}, 500
 
 
         # else if ID is not null, get the one plant corresponding to the ID
@@ -436,7 +436,7 @@ class ActPianteResource(Resource):
             return {"message": "Pianta eliminata"}, 204
         except SQLAlchemyError as err:
             db.session.rollback()
-            return {"message": "Errore durante la cancellazione della pianta" + str(err)}, 500
+            return {"message": "Errore durante la cancellazione della pianta"}, 500
 
 
 
