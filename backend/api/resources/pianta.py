@@ -76,6 +76,23 @@ class ActPianteResource(Resource):
 
     def get(self, plantID=None):
 
+        
+        # the map helps the fields attribute during REST API invoke to not write the entity for each nested field (detail and sensors detail)
+        fieldsAttribute_fields_map = {
+            'NOME_PIANTA': 'dettaglio',
+            'DESCRIZIONE_PIANTA': 'dettaglio',
+            'ID_STANZA': 'dettaglio',
+            'NOME_STANZA': 'dettaglio',
+            'POSIZIONE_STANZA_X': 'dettaglio',
+            'POSIZIONE_STANZA_Y': 'dettaglio',
+            'UMIDITA_CORRENTE': 'dettaglioSensori',
+            'ACQUA_ULTIMA_INNAFFIATURA': 'dettaglioSensori',
+            'ALTRO_DATO_SENSORI_1': 'dettaglioSensori',
+            'ALTRO_DATO_SENSORI_2': 'dettaglioSensori',
+            'ALTRO_DATO_SENSORI_3': 'dettaglioSensori',
+            'ALTRO_DATO_SENSORI_4': 'dettaglioSensori',
+        }
+
 
         # the map helps the orderBy attribute during REST API invoke to not write the model for each field
         orderByAttribute_fields_map = {
@@ -103,21 +120,14 @@ class ActPianteResource(Resource):
             'ALTRO_DATO_SENSORI_4' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4
         }
 
-        
-        # the map helps the fields attribute during REST API invoke to not write the entity for each nested field (detail and sensors detail)
-        fieldsAttribute_fields_map = {
-            'NOME_PIANTA': 'dettaglio',
-            'DESCRIZIONE_PIANTA': 'dettaglio',
-            'ID_STANZA': 'dettaglio',
-            'NOME_STANZA': 'dettaglio',
-            'POSIZIONE_STANZA_X': 'dettaglio',
-            'POSIZIONE_STANZA_Y': 'dettaglio',
-            'UMIDITA_CORRENTE': 'dettaglioSensori',
-            'ACQUA_ULTIMA_INNAFFIATURA': 'dettaglioSensori',
-            'ALTRO_DATO_SENSORI_1': 'dettaglioSensori',
-            'ALTRO_DATO_SENSORI_2': 'dettaglioSensori',
-            'ALTRO_DATO_SENSORI_3': 'dettaglioSensori',
-            'ALTRO_DATO_SENSORI_4': 'dettaglioSensori',
+
+        # the map helps making the only necessary joins during the query construction
+        orderByAttribute_joins_map = {
+            ActPianteDettaglioModel.__tablename__: ActPianteTestataModel.dettaglio,
+            ActPianteDettaglioSensoriModel.__tablename__: ActPianteTestataModel.dettaglioSensori,
+            LookupStatiModel.__tablename__: ActPianteTestataModel.status,
+            LookupProgrammiModel.__tablename__: ActPianteTestataModel.schedule,
+            LookupStanzeModel.__tablename__: ActPianteDettaglioModel.stanza
         }
 
 
@@ -153,13 +163,15 @@ class ActPianteResource(Resource):
 
                 page = request.args.get('page', default=1, type=int)
                 limit = request.args.get('limit', default=25, type=int)
-                orderBy = request.args.get('orderBy', default='DATA_ULTIMA_MODIFICA:desc', type=str)
+                orderBy = request.args.get('orderBy', default='DATA_ULTIMA_MODIFICA:desc', type=str).split(':')
+
 
                 if page < 1:
                     return {"message": "La pagina deve essere un valore positivo"}, 400
                 if limit < 1 or limit > 100:
                     return {"message": "Il limite deve essere compreso o uguale tra 1 e 100"}, 400
-                orderBy = orderBy.split(':')
+                if not orderByAttribute_fields_map.get(orderBy[0]):
+                    return {"message": "L'attributo di ordinamento contiene un campo non valido"}, 400
                 
 
                 # query construction:
@@ -167,10 +179,27 @@ class ActPianteResource(Resource):
                             .options(joinedload(ActPianteTestataModel.dettaglio).joinedload(ActPianteDettaglioModel.stanza))\
                             .options(joinedload(ActPianteTestataModel.dettaglioSensori))\
                             .options(joinedload(ActPianteTestataModel.status))\
-                            .options(joinedload(ActPianteTestataModel.schedule))\
-                            .order_by(orderByAttribute_fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else orderByAttribute_fields_map.get(orderBy[0]).asc())
+                            .options(joinedload(ActPianteTestataModel.schedule))
+                            # .order_by(orderByAttribute_fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else orderByAttribute_fields_map.get(orderBy[0]).asc())
                 
+
+                print(orderByAttribute_fields_map.get(orderBy[0]))
+                print(orderByAttribute_fields_map.get(orderBy[0]).__class__)
                 
+
+                # check if query needs joins for orderBy with substructures' fields
+                orderByFieldTableModel = orderByAttribute_fields_map.get(orderBy[0]).table
+                if orderByFieldTableModel in orderByAttribute_joins_map:
+                    # LookupStanzeModel need the join with detail substructure before the join with the lookup table
+                    if orderByFieldTableModel is LookupStanzeModel.__tablename__:
+                        plants = plants.join(ActPianteTestataModel.dettaglio)
+                    plants = plants.join(orderByAttribute_joins_map[orderByFieldTableModel])
+
+
+                # add the orderBy clause to the query
+                plants = plants.order_by(orderByAttribute_fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else orderByAttribute_fields_map.get(orderBy[0]).asc())
+                
+
                 pagination = plants.paginate(page=page, per_page=limit, error_out=False)
                 # get only fields specified in the queryFields list from the schema or all fields
                 schema = ActPianteSchema(many=True, only=queryFields if queryFields else None)
@@ -189,6 +218,7 @@ class ActPianteResource(Resource):
                 }, 200
             except SQLAlchemyError as e:
                 return {"message": "Errore durante il recupero delle piante" + str(e)}, 500
+
 
 
         # else if ID is not null, get the one plant corresponding to the ID
