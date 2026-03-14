@@ -122,6 +122,10 @@ class ActPianteResource(Resource):
 
 
         # the map helps making the only necessary joins during the query construction
+        # -key: table name on the DB
+        # -value: (header or detail model name).(entity name)
+        # ----header or detail model name --> ActPianteTestataModel or ActPianteDettaglioModel
+        # ----entity name --> dettaglio or dettaglioSensori or status or schedule or stanza
         orderByAttribute_joins_map = {
             ActPianteDettaglioModel.__tablename__: ActPianteTestataModel.dettaglio,
             ActPianteDettaglioSensoriModel.__tablename__: ActPianteTestataModel.dettaglioSensori,
@@ -129,6 +133,20 @@ class ActPianteResource(Resource):
             LookupProgrammiModel.__tablename__: ActPianteTestataModel.schedule,
             LookupStanzeModel.__tablename__: ActPianteDettaglioModel.stanza
         }
+
+
+        """ print("-------------------------")
+        print(ActPianteDettaglioModel.__tablename__)
+        print(ActPianteTestataModel.dettaglio)
+        print(ActPianteDettaglioSensoriModel.__tablename__)
+        print(ActPianteTestataModel.dettaglioSensori)
+        print(LookupStatiModel.__tablename__)
+        print(ActPianteTestataModel.status)
+        print(LookupProgrammiModel.__tablename__)
+        print(ActPianteTestataModel.schedule)
+        print(LookupStanzeModel.__tablename__)
+        print(ActPianteDettaglioModel.stanza)
+        print("-------------------------") """
 
 
         
@@ -153,6 +171,12 @@ class ActPianteResource(Resource):
                     if modelField == schemaField:
                         queryFields.append(schemaField)
                         queryFields.append(f"{schemaField}.{field}")
+        
+
+        # SHOULD WORK --- CHECK
+        """ print("query fields after for loop")
+        print(queryFields) """
+        # SHOULD WORK --- CHECK
 
 
 
@@ -164,6 +188,11 @@ class ActPianteResource(Resource):
                 page = request.args.get('page', default=1, type=int)
                 limit = request.args.get('limit', default=25, type=int)
                 orderBy = request.args.get('orderBy', default='DATA_ULTIMA_MODIFICA:desc', type=str).split(':')
+
+                print("orderBy")
+                print(orderBy)
+                print("orderByAttribute_fields_map.get(orderBy[0])")
+                print(orderByAttribute_fields_map.get(orderBy[0])) # ActPianteDettaglioModel.NOME_PIANTA
 
 
                 if page < 1:
@@ -183,12 +212,17 @@ class ActPianteResource(Resource):
                             # .order_by(orderByAttribute_fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else orderByAttribute_fields_map.get(orderBy[0]).asc())
                 
 
-                print(orderByAttribute_fields_map.get(orderBy[0]))
-                print(orderByAttribute_fields_map.get(orderBy[0]).__class__)
+                print("query")
+                print(plants)
+                
+
+                """ print(orderByAttribute_fields_map.get(orderBy[0]))
+                print(orderByAttribute_fields_map.get(orderBy[0]).__class__) """
                 
 
                 # check if query needs joins for orderBy with substructures' fields
-                orderByFieldTableModel = orderByAttribute_fields_map.get(orderBy[0]).table
+                orderByFieldTableModel = orderByAttribute_fields_map.get(orderBy[0]).table 
+                # ----- orderByFieldTableModel = act_anagrafica_piante_dettaglio -----
                 if orderByFieldTableModel in orderByAttribute_joins_map:
                     # LookupStanzeModel need the join with detail substructure before the join with the lookup table
                     if orderByFieldTableModel is LookupStanzeModel.__tablename__:
