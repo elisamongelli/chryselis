@@ -2,7 +2,7 @@ import json, datetime, io, zipfile
 from flask import request, Response
 from flask_restful import Resource
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, aliased, contains_eager
 from marshmallow import ValidationError
 from PIL import Image
 from api.models import db
@@ -204,16 +204,66 @@ class ActPianteResource(Resource):
                 
 
                 # query construction:
-                plants = ActPianteTestataModel.query\
+                """ plants = ActPianteTestataModel.query\
                             .options(joinedload(ActPianteTestataModel.dettaglio).joinedload(ActPianteDettaglioModel.stanza))\
                             .options(joinedload(ActPianteTestataModel.dettaglioSensori))\
                             .options(joinedload(ActPianteTestataModel.status))\
-                            .options(joinedload(ActPianteTestataModel.schedule))
+                            .options(joinedload(ActPianteTestataModel.schedule)) """
                             # .order_by(orderByAttribute_fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else orderByAttribute_fields_map.get(orderBy[0]).asc())
                 
 
-                print("query")
-                print(plants)
+                
+                # define aliases for related tables in order to make joins
+                Details = aliased(ActPianteDettaglioModel)
+                SensorsDetails = aliased(ActPianteDettaglioSensoriModel)
+                Room = aliased(LookupStanzeModel)
+                Status = aliased(LookupStatiModel)
+                Schedule = aliased(LookupProgrammiModel)
+                
+                
+                plants = ActPianteTestataModel.query\
+                            .join(Details, ActPianteTestataModel.dettaglio, isouter=True)\
+                            .join(Room, Details.stanza, isouter=True)\
+                            .join(SensorsDetails, ActPianteTestataModel.dettaglioSensori, isouter=True)\
+                            .join(Status, ActPianteTestataModel.status, isouter=True)\
+                            .join(Schedule, ActPianteTestataModel.schedule, isouter=True)\
+                            .options(
+                                contains_eager(ActPianteTestataModel.dettaglio, alias=Details),
+                                contains_eager(ActPianteTestataModel.dettaglio, ActPianteDettaglioModel.stanza, alias=Room),
+                                contains_eager(ActPianteTestataModel.dettaglioSensori, alias=SensorsDetails),
+                                contains_eager(ActPianteTestataModel.status, alias=Status),
+                                contains_eager(ActPianteTestataModel.schedule, alias=Schedule)
+                            )
+                
+
+                # print("query")
+                # print(plants)
+
+
+                orderbyAttribute_orderBy_map = {
+                    'ID_PIANTA' : ActPianteTestataModel.ID_PIANTA,
+                    'ID_STATO_PIANTA' : ActPianteTestataModel.ID_STATO_PIANTA,
+                    'NOME_STATO' : Status.NOME_STATO,
+                    'DESCRIZIONE_STATO' : Status.DESCRIZIONE_STATO,
+                    'ID_ULTIMO_PROGRAMMA_ESEGUITO' : ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
+                    'NOME_PROGRAMMA' : Schedule.NOME_PROGRAMMA,
+                    'ORARIO_INIZIO_PROGRAMMA' : Schedule.ORARIO_INIZIO_PROGRAMMA,
+                    'ORARIO_FINE_PROGRAMMA' : Schedule.ORARIO_FINE_PROGRAMMA,
+                    'DATA_INSERIMENTO' : ActPianteTestataModel.DATA_INSERIMENTO,
+                    'DATA_ULTIMA_MODIFICA' : ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
+                    'NOME_PIANTA' : Details.NOME_PIANTA,
+                    'DESCRIZIONE_PIANTA' : Details.DESCRIZIONE_PIANTA,
+                    'ID_STANZA' : Details.ID_STANZA,
+                    'NOME_STANZA' : Room.NOME_STANZA,
+                    'POSIZIONE_STANZA_X' : Details.POSIZIONE_STANZA_X,
+                    'POSIZIONE_STANZA_Y' : Details.POSIZIONE_STANZA_Y,
+                    'UMIDITA_CORRENTE' : SensorsDetails.UMIDITA_CORRENTE,
+                    'ACQUA_ULTIMA_INNAFFIATURA' : SensorsDetails.ACQUA_ULTIMA_INNAFFIATURA,
+                    'ALTRO_DATO_SENSORI_1' : SensorsDetails.ALTRO_DATO_SENSORI_1,
+                    'ALTRO_DATO_SENSORI_2' : SensorsDetails.ALTRO_DATO_SENSORI_2,
+                    'ALTRO_DATO_SENSORI_3' : SensorsDetails.ALTRO_DATO_SENSORI_3,
+                    'ALTRO_DATO_SENSORI_4' : SensorsDetails.ALTRO_DATO_SENSORI_4
+                }
                 
 
                 """ print(orderByAttribute_fields_map.get(orderBy[0]))
@@ -221,17 +271,21 @@ class ActPianteResource(Resource):
                 
 
                 # check if query needs joins for orderBy with substructures' fields
-                orderByFieldTableModel = orderByAttribute_fields_map.get(orderBy[0]).table 
+                """ orderByFieldTableModel = orderByAttribute_fields_map.get(orderBy[0]).table 
                 # ----- orderByFieldTableModel = act_anagrafica_piante_dettaglio -----
                 if orderByFieldTableModel in orderByAttribute_joins_map:
                     # LookupStanzeModel need the join with detail substructure before the join with the lookup table
                     if orderByFieldTableModel is LookupStanzeModel.__tablename__:
                         plants = plants.join(ActPianteTestataModel.dettaglio)
-                    plants = plants.join(orderByAttribute_joins_map[orderByFieldTableModel])
+                    plants = plants.join(orderByAttribute_joins_map[orderByFieldTableModel]) """
 
 
                 # add the orderBy clause to the query
-                plants = plants.order_by(orderByAttribute_fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else orderByAttribute_fields_map.get(orderBy[0]).asc())
+                plants = plants.order_by(orderbyAttribute_orderBy_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else orderByAttribute_fields_map.get(orderBy[0]).asc())
+
+
+                print("complete query")
+                print(plants)
                 
 
                 pagination = plants.paginate(page=page, per_page=limit, error_out=False)
