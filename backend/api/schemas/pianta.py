@@ -8,7 +8,7 @@ class ActPianteDettaglioSchema(Schema):
     NOME_PIANTA = fields.Str() # attribute='dettaglio.NOME_PIANTA'
     DESCRIZIONE_PIANTA = fields.Str(validate=validate.Length(max=65535)) # attribute='dettaglio.DESCRIZIONE_PIANTA', 
     ID_STANZA = fields.Str() # attribute='dettaglio.ID_STANZA'
-    NOME_STANZA = fields.Str(attribute='room.NOME_STANZA')
+    NOME_STANZA = fields.Str(attribute='stanza.NOME_STANZA')
     POSIZIONE_STANZA_X = fields.Int() # attribute='dettaglio.POSIZIONE_STANZA_X'
     POSIZIONE_STANZA_Y = fields.Int() # attribute='dettaglio.POSIZIONE_STANZA_Y'
 

@@ -22,7 +22,7 @@ one_foto_piante_schema = ActFotoPianteSchema()
 
 
 
-all_plant_fields_without_sensors = [ActPianteTestataModel.ID_PIANTA,
+""" all_plant_fields_without_sensors = [ActPianteTestataModel.ID_PIANTA,
                                     ActPianteTestataModel.ID_STATO_PIANTA,
                                     LookupStatiModel.NOME_STATO.label('NOME_STATO'),
                                     LookupStatiModel.DESCRIZIONE_STATO.label('DESCRIZIONE_STATO'),
@@ -61,7 +61,7 @@ all_plant_fields = [ActPianteTestataModel.ID_PIANTA,
                     ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_1,
                     ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_2,
                     ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_3,
-                    ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4]
+                    ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4] """
 
 
 photo_fields = [ActPianteTestataModel.ID_PIANTA,
@@ -78,7 +78,7 @@ class ActPianteResource(Resource):
 
         
         # the map helps the fields attribute during REST API invoke to not write the entity for each nested field (detail and sensors detail)
-        fieldsAttribute_fields_map = {
+        CONST_FIELDS_ATTRIBUTE_FIELDS_MAP = {
             'NOME_PIANTA': 'dettaglio',
             'DESCRIZIONE_PIANTA': 'dettaglio',
             'ID_STANZA': 'dettaglio',
@@ -95,7 +95,7 @@ class ActPianteResource(Resource):
 
 
         # the map helps the orderBy attribute during REST API invoke to not write the model for each field
-        orderByAttribute_fields_map = {
+        """ orderByAttribute_fields_map = {
             'ID_PIANTA' : ActPianteTestataModel.ID_PIANTA,
             'ID_STATO_PIANTA' : ActPianteTestataModel.ID_STATO_PIANTA,
             'NOME_STATO' : LookupStatiModel.NOME_STATO,
@@ -118,6 +118,41 @@ class ActPianteResource(Resource):
             'ALTRO_DATO_SENSORI_2' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_2,
             'ALTRO_DATO_SENSORI_3' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_3,
             'ALTRO_DATO_SENSORI_4' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4
+        } """
+
+
+                        
+        # define aliases for related tables in order to make joins
+        Details = aliased(ActPianteDettaglioModel)
+        SensorsDetails = aliased(ActPianteDettaglioSensoriModel)
+        Room = aliased(LookupStanzeModel)
+        Status = aliased(LookupStatiModel)
+        Schedule = aliased(LookupProgrammiModel)
+
+
+        CONST_ALL_ALIASED_FIELDS = {
+            'ID_PIANTA' : ActPianteTestataModel.ID_PIANTA,
+            'ID_STATO_PIANTA' : ActPianteTestataModel.ID_STATO_PIANTA,
+            'NOME_STATO' : Status.NOME_STATO,
+            'DESCRIZIONE_STATO' : Status.DESCRIZIONE_STATO,
+            'ID_ULTIMO_PROGRAMMA_ESEGUITO' : ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
+            'NOME_PROGRAMMA' : Schedule.NOME_PROGRAMMA,
+            'ORARIO_INIZIO_PROGRAMMA' : Schedule.ORARIO_INIZIO_PROGRAMMA,
+            'ORARIO_FINE_PROGRAMMA' : Schedule.ORARIO_FINE_PROGRAMMA,
+            'DATA_INSERIMENTO' : ActPianteTestataModel.DATA_INSERIMENTO,
+            'DATA_ULTIMA_MODIFICA' : ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
+            'NOME_PIANTA' : Details.NOME_PIANTA,
+            'DESCRIZIONE_PIANTA' : Details.DESCRIZIONE_PIANTA,
+            'ID_STANZA' : Details.ID_STANZA,
+            'NOME_STANZA' : Room.NOME_STANZA,
+            'POSIZIONE_STANZA_X' : Details.POSIZIONE_STANZA_X,
+            'POSIZIONE_STANZA_Y' : Details.POSIZIONE_STANZA_Y,
+            'UMIDITA_CORRENTE' : SensorsDetails.UMIDITA_CORRENTE,
+            'ACQUA_ULTIMA_INNAFFIATURA' : SensorsDetails.ACQUA_ULTIMA_INNAFFIATURA,
+            'ALTRO_DATO_SENSORI_1' : SensorsDetails.ALTRO_DATO_SENSORI_1,
+            'ALTRO_DATO_SENSORI_2' : SensorsDetails.ALTRO_DATO_SENSORI_2,
+            'ALTRO_DATO_SENSORI_3' : SensorsDetails.ALTRO_DATO_SENSORI_3,
+            'ALTRO_DATO_SENSORI_4' : SensorsDetails.ALTRO_DATO_SENSORI_4
         }
 
 
@@ -126,13 +161,13 @@ class ActPianteResource(Resource):
         # -value: (header or detail model name).(entity name)
         # ----header or detail model name --> ActPianteTestataModel or ActPianteDettaglioModel
         # ----entity name --> dettaglio or dettaglioSensori or status or schedule or stanza
-        orderByAttribute_joins_map = {
+        """ orderByAttribute_joins_map = {
             ActPianteDettaglioModel.__tablename__: ActPianteTestataModel.dettaglio,
             ActPianteDettaglioSensoriModel.__tablename__: ActPianteTestataModel.dettaglioSensori,
             LookupStatiModel.__tablename__: ActPianteTestataModel.status,
             LookupProgrammiModel.__tablename__: ActPianteTestataModel.schedule,
             LookupStanzeModel.__tablename__: ActPianteDettaglioModel.stanza
-        }
+        } """
 
 
         """ print("-------------------------")
@@ -156,21 +191,59 @@ class ActPianteResource(Resource):
 
         if fields is not None:
             # get the fields list from the REST API invoke and associate them with the ones in the map
-            fields = [field.strip() for field in fields.split(',') if field.strip()]
+            """ fields = {field.strip() for field in fields.split(',') if field.strip()}
             # get all fields from the schema to order those in the response JSON payload
             schemaFields = ActPianteSchema().fields
             for schemaField in schemaFields:
-                # root field (header table field or lookup table field)
+                # is a root field (from header table or status/schedule lookup tables)
                 if schemaField in fields:
                     queryFields.append(schemaField)
-                # nested field (from detail table or sensors detail table)
+                # is a nested field (from details table or sensors details table or room lookup table)
+                # -schemaField is "dettaglio" or "dettaglioSensori"
+                # -nestedFields contains all the fields specified in the fields attribute which are from the schemaField
+                nestedFields = [field for field in fields if CONST_FIELDS_ATTRIBUTE_FIELDS_MAP.get(field) == schemaField]
+                if nestedFields:
+                    if schemaField not in queryFields:
+                        print("\nschema_field " + schemaField + " not in query_fields\n")
+                        queryFields.append(schemaField)
+                    # inserts into queryFields all the fields that are from the schemaField
+                    queryFields.extend(f"{schemaField}.{field}" for field in nestedFields) " ""
+                " "" NOT NEEDED ANYMORE - for loop has been made inline into nestedFields
                 for field in fields:
+                    print("CURRENT FIELD: " + field)
                     # get the current field with its model
-                    modelField = fieldsAttribute_fields_map.get(field)
+                    modelField = CONST_FIELDS_ATTRIBUTE_FIELDS_MAP.get(field)
                     # if current field is in the schema
                     if modelField == schemaField:
+                        print("MODEL FIELD EQUALS SCHEMA FIELD: " + modelField)
                         queryFields.append(schemaField)
-                        queryFields.append(f"{schemaField}.{field}")
+                        queryFields.append(f"{schemaField}.{field}") """
+            
+            
+            """ CODE FROM CLAUDE AI """
+            requested = {f.strip() for f in fields.split(',') if f.strip()}
+            schema_fields = ActPianteSchema().fields
+            # queryFields = []
+
+            for schema_field in schema_fields:
+                print(schema_field)
+                if schema_field in requested:
+                    print("\nschema field in requested: " + schema_field + "\n")
+                    queryFields.append(schema_field)
+
+                nested_fields = [f for f in requested if CONST_FIELDS_ATTRIBUTE_FIELDS_MAP.get(f) == schema_field]
+                if nested_fields:
+                    print("\n")
+                    print(nested_fields)
+                    print("\n")
+                    """ if schema_field not in queryFields:
+                        print("\nschema_field " + schema_field + " not in query_fields\n")
+                        queryFields.append(schema_field) """
+                    queryFields.extend(f"{schema_field}.{f}" for f in nested_fields)
+                    print(queryFields)
+            
+            print("\nQUERY FIELDS: ")
+            print(queryFields)
         
 
         # SHOULD WORK --- CHECK
@@ -189,17 +262,17 @@ class ActPianteResource(Resource):
                 limit = request.args.get('limit', default=25, type=int)
                 orderBy = request.args.get('orderBy', default='DATA_ULTIMA_MODIFICA:desc', type=str).split(':')
 
-                print("orderBy")
+                """ print("orderBy")
                 print(orderBy)
                 print("orderByAttribute_fields_map.get(orderBy[0])")
-                print(orderByAttribute_fields_map.get(orderBy[0])) # ActPianteDettaglioModel.NOME_PIANTA
+                print(orderByAttribute_fields_map.get(orderBy[0])) # ActPianteDettaglioModel.NOME_PIANTA """
 
 
                 if page < 1:
                     return {"message": "La pagina deve essere un valore positivo"}, 400
                 if limit < 1 or limit > 100:
                     return {"message": "Il limite deve essere compreso o uguale tra 1 e 100"}, 400
-                if not orderByAttribute_fields_map.get(orderBy[0]):
+                if not CONST_ALL_ALIASED_FIELDS.get(orderBy[0]):
                     return {"message": "L'attributo di ordinamento contiene un campo non valido"}, 400
                 
 
@@ -212,13 +285,7 @@ class ActPianteResource(Resource):
                             # .order_by(orderByAttribute_fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else orderByAttribute_fields_map.get(orderBy[0]).asc())
                 
 
-                
-                # define aliases for related tables in order to make joins
-                Details = aliased(ActPianteDettaglioModel)
-                SensorsDetails = aliased(ActPianteDettaglioSensoriModel)
-                Room = aliased(LookupStanzeModel)
-                Status = aliased(LookupStatiModel)
-                Schedule = aliased(LookupProgrammiModel)
+
                 
                 
                 plants = ActPianteTestataModel.query\
@@ -233,37 +300,12 @@ class ActPianteResource(Resource):
                                 contains_eager(ActPianteTestataModel.dettaglioSensori, alias=SensorsDetails),
                                 contains_eager(ActPianteTestataModel.status, alias=Status),
                                 contains_eager(ActPianteTestataModel.schedule, alias=Schedule)
-                            )
+                            )\
+                            .order_by(CONST_ALL_ALIASED_FIELDS.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else CONST_ALL_ALIASED_FIELDS.get(orderBy[0]).asc())
                 
 
                 # print("query")
                 # print(plants)
-
-
-                orderbyAttribute_orderBy_map = {
-                    'ID_PIANTA' : ActPianteTestataModel.ID_PIANTA,
-                    'ID_STATO_PIANTA' : ActPianteTestataModel.ID_STATO_PIANTA,
-                    'NOME_STATO' : Status.NOME_STATO,
-                    'DESCRIZIONE_STATO' : Status.DESCRIZIONE_STATO,
-                    'ID_ULTIMO_PROGRAMMA_ESEGUITO' : ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
-                    'NOME_PROGRAMMA' : Schedule.NOME_PROGRAMMA,
-                    'ORARIO_INIZIO_PROGRAMMA' : Schedule.ORARIO_INIZIO_PROGRAMMA,
-                    'ORARIO_FINE_PROGRAMMA' : Schedule.ORARIO_FINE_PROGRAMMA,
-                    'DATA_INSERIMENTO' : ActPianteTestataModel.DATA_INSERIMENTO,
-                    'DATA_ULTIMA_MODIFICA' : ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
-                    'NOME_PIANTA' : Details.NOME_PIANTA,
-                    'DESCRIZIONE_PIANTA' : Details.DESCRIZIONE_PIANTA,
-                    'ID_STANZA' : Details.ID_STANZA,
-                    'NOME_STANZA' : Room.NOME_STANZA,
-                    'POSIZIONE_STANZA_X' : Details.POSIZIONE_STANZA_X,
-                    'POSIZIONE_STANZA_Y' : Details.POSIZIONE_STANZA_Y,
-                    'UMIDITA_CORRENTE' : SensorsDetails.UMIDITA_CORRENTE,
-                    'ACQUA_ULTIMA_INNAFFIATURA' : SensorsDetails.ACQUA_ULTIMA_INNAFFIATURA,
-                    'ALTRO_DATO_SENSORI_1' : SensorsDetails.ALTRO_DATO_SENSORI_1,
-                    'ALTRO_DATO_SENSORI_2' : SensorsDetails.ALTRO_DATO_SENSORI_2,
-                    'ALTRO_DATO_SENSORI_3' : SensorsDetails.ALTRO_DATO_SENSORI_3,
-                    'ALTRO_DATO_SENSORI_4' : SensorsDetails.ALTRO_DATO_SENSORI_4
-                }
                 
 
                 """ print(orderByAttribute_fields_map.get(orderBy[0]))
@@ -278,14 +320,18 @@ class ActPianteResource(Resource):
                     if orderByFieldTableModel is LookupStanzeModel.__tablename__:
                         plants = plants.join(ActPianteTestataModel.dettaglio)
                     plants = plants.join(orderByAttribute_joins_map[orderByFieldTableModel]) """
+                
+
+                """ print("ORDER BY HA IL CAMPO:")
+                print(orderbyAttribute_orderBy_map.get(orderBy[0])) """
 
 
                 # add the orderBy clause to the query
-                plants = plants.order_by(orderbyAttribute_orderBy_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else orderByAttribute_fields_map.get(orderBy[0]).asc())
+                # plants = plants.order_by(CONST_ALL_ALIASED_FIELDS.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else CONST_ALL_ALIASED_FIELDS.get(orderBy[0]).asc())
 
 
-                print("complete query")
-                print(plants)
+                """ print("complete query")
+                print(plants) """
                 
 
                 pagination = plants.paginate(page=page, per_page=limit, error_out=False)
