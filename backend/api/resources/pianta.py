@@ -471,11 +471,16 @@ class ActPianteResource(Resource):
             return {"message": "Pianta non trovata"}, 404
         
 
+        print("LA PIANTA E' STATA TROVATA")
+        
+
         # get JSON payload with all fields to be updated except for the photo
         jsonRequestPayload=None
         try:
             requestPayload = request.form.get('payload')
+            print(requestPayload)
             if requestPayload is not None:
+                print("REQUEST PAYLOAD NON E' VUOTO")
                 jsonRequestPayload = json.loads(requestPayload)
         except Exception:
             return {"message": "Errore durante il recupero dei dati da salvare"}, 400
@@ -484,9 +489,11 @@ class ActPianteResource(Resource):
         # get the photo's bytes from the file attachment in the multipart form-data request
         photoBytes = None
         photoFile = request.files.get('image')
+        print(photoFile) # check if photo file is correctly retrieved
         if photoFile:
             try:
                 photoBytes = photoFile.read()
+                print("IL FILE DELLA PIANTA E' STATO LETTO CORRETTAMENTE")
             except Exception:
                 return {"message": "Errore durante il recupero della foto da salvare"}, 400
 
