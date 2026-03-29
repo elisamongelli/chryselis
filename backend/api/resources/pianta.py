@@ -22,48 +22,6 @@ one_foto_piante_schema = ActFotoPianteSchema()
 
 
 
-""" all_plant_fields_without_sensors = [ActPianteTestataModel.ID_PIANTA,
-                                    ActPianteTestataModel.ID_STATO_PIANTA,
-                                    LookupStatiModel.NOME_STATO.label('NOME_STATO'),
-                                    LookupStatiModel.DESCRIZIONE_STATO.label('DESCRIZIONE_STATO'),
-                                    ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
-                                    LookupProgrammiModel.NOME_PROGRAMMA.label('NOME_PROGRAMMA'),
-                                    LookupProgrammiModel.ORARIO_INIZIO_PROGRAMMA.label('ORARIO_INIZIO_PROGRAMMA'),
-                                    LookupProgrammiModel.ORARIO_FINE_PROGRAMMA.label('ORARIO_FINE_PROGRAMMA'),
-                                    ActPianteTestataModel.DATA_INSERIMENTO,
-                                    ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
-                                    ActPianteDettaglioModel.NOME_PIANTA,
-                                    ActPianteDettaglioModel.DESCRIZIONE_PIANTA,
-                                    ActPianteDettaglioModel.ID_STANZA,
-                                    LookupStanzeModel.NOME_STANZA.label('NOME_STANZA'),
-                                    ActPianteDettaglioModel.POSIZIONE_STANZA_X,
-                                    ActPianteDettaglioModel.POSIZIONE_STANZA_Y]
-
-
-all_plant_fields = [ActPianteTestataModel.ID_PIANTA,
-                    ActPianteTestataModel.ID_STATO_PIANTA,
-                    LookupStatiModel.NOME_STATO.label('NOME_STATO'),
-                    LookupStatiModel.DESCRIZIONE_STATO.label('DESCRIZIONE_STATO'),
-                    ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
-                    LookupProgrammiModel.NOME_PROGRAMMA.label('NOME_PROGRAMMA'),
-                    LookupProgrammiModel.ORARIO_INIZIO_PROGRAMMA.label('ORARIO_INIZIO_PROGRAMMA'),
-                    LookupProgrammiModel.ORARIO_FINE_PROGRAMMA.label('ORARIO_FINE_PROGRAMMA'),
-                    ActPianteTestataModel.DATA_INSERIMENTO,
-                    ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
-                    ActPianteDettaglioModel.NOME_PIANTA,
-                    ActPianteDettaglioModel.DESCRIZIONE_PIANTA,
-                    ActPianteDettaglioModel.ID_STANZA,
-                    LookupStanzeModel.NOME_STANZA.label('NOME_STANZA'),
-                    ActPianteDettaglioModel.POSIZIONE_STANZA_X,
-                    ActPianteDettaglioModel.POSIZIONE_STANZA_Y,
-                    ActPianteDettaglioSensoriModel.UMIDITA_CORRENTE,
-                    ActPianteDettaglioSensoriModel.ACQUA_ULTIMA_INNAFFIATURA,
-                    ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_1,
-                    ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_2,
-                    ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_3,
-                    ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4] """
-
-
 photo_fields = [ActPianteTestataModel.ID_PIANTA,
                 ActPianteDettaglioModel.FOTO_PIANTA]
 
@@ -92,33 +50,6 @@ class ActPianteResource(Resource):
             'ALTRO_DATO_SENSORI_3': 'dettaglioSensori',
             'ALTRO_DATO_SENSORI_4': 'dettaglioSensori',
         }
-
-
-        # the map helps the orderBy attribute during REST API invoke to not write the model for each field
-        """ orderByAttribute_fields_map = {
-            'ID_PIANTA' : ActPianteTestataModel.ID_PIANTA,
-            'ID_STATO_PIANTA' : ActPianteTestataModel.ID_STATO_PIANTA,
-            'NOME_STATO' : LookupStatiModel.NOME_STATO,
-            'DESCRIZIONE_STATO' : LookupStatiModel.DESCRIZIONE_STATO,
-            'ID_ULTIMO_PROGRAMMA_ESEGUITO' : ActPianteTestataModel.ID_ULTIMO_PROGRAMMA_ESEGUITO,
-            'NOME_PROGRAMMA' : LookupProgrammiModel.NOME_PROGRAMMA,
-            'ORARIO_INIZIO_PROGRAMMA' : LookupProgrammiModel.ORARIO_INIZIO_PROGRAMMA,
-            'ORARIO_FINE_PROGRAMMA' : LookupProgrammiModel.ORARIO_FINE_PROGRAMMA,
-            'DATA_INSERIMENTO' : ActPianteTestataModel.DATA_INSERIMENTO,
-            'DATA_ULTIMA_MODIFICA' : ActPianteTestataModel.DATA_ULTIMA_MODIFICA,
-            'NOME_PIANTA' : ActPianteDettaglioModel.NOME_PIANTA,
-            'DESCRIZIONE_PIANTA' : ActPianteDettaglioModel.DESCRIZIONE_PIANTA,
-            'ID_STANZA' : ActPianteDettaglioModel.ID_STANZA,
-            'NOME_STANZA' : LookupStanzeModel.NOME_STANZA,
-            'POSIZIONE_STANZA_X' : ActPianteDettaglioModel.POSIZIONE_STANZA_X,
-            'POSIZIONE_STANZA_Y' : ActPianteDettaglioModel.POSIZIONE_STANZA_Y,
-            'UMIDITA_CORRENTE' : ActPianteDettaglioSensoriModel.UMIDITA_CORRENTE,
-            'ACQUA_ULTIMA_INNAFFIATURA' : ActPianteDettaglioSensoriModel.ACQUA_ULTIMA_INNAFFIATURA,
-            'ALTRO_DATO_SENSORI_1' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_1,
-            'ALTRO_DATO_SENSORI_2' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_2,
-            'ALTRO_DATO_SENSORI_3' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_3,
-            'ALTRO_DATO_SENSORI_4' : ActPianteDettaglioSensoriModel.ALTRO_DATO_SENSORI_4
-        } """
 
 
                         
@@ -156,34 +87,6 @@ class ActPianteResource(Resource):
         }
 
 
-        # the map helps making the only necessary joins during the query construction
-        # -key: table name on the DB
-        # -value: (header or detail model name).(entity name)
-        # ----header or detail model name --> ActPianteTestataModel or ActPianteDettaglioModel
-        # ----entity name --> dettaglio or dettaglioSensori or status or schedule or stanza
-        """ orderByAttribute_joins_map = {
-            ActPianteDettaglioModel.__tablename__: ActPianteTestataModel.dettaglio,
-            ActPianteDettaglioSensoriModel.__tablename__: ActPianteTestataModel.dettaglioSensori,
-            LookupStatiModel.__tablename__: ActPianteTestataModel.status,
-            LookupProgrammiModel.__tablename__: ActPianteTestataModel.schedule,
-            LookupStanzeModel.__tablename__: ActPianteDettaglioModel.stanza
-        } """
-
-
-        """ print("-------------------------")
-        print(ActPianteDettaglioModel.__tablename__)
-        print(ActPianteTestataModel.dettaglio)
-        print(ActPianteDettaglioSensoriModel.__tablename__)
-        print(ActPianteTestataModel.dettaglioSensori)
-        print(LookupStatiModel.__tablename__)
-        print(ActPianteTestataModel.status)
-        print(LookupProgrammiModel.__tablename__)
-        print(ActPianteTestataModel.schedule)
-        print(LookupStanzeModel.__tablename__)
-        print(ActPianteDettaglioModel.stanza)
-        print("-------------------------") """
-
-
         
         # fields to be returned can be chosen both if ID is None or populated
         fields = request.args.get('fields', default=None, type=str)
@@ -191,66 +94,16 @@ class ActPianteResource(Resource):
 
         if fields is not None:
             # get the fields list from the REST API invoke and associate them with the ones in the map
-            """ fields = {field.strip() for field in fields.split(',') if field.strip()}
-            # get all fields from the schema to order those in the response JSON payload
+            requestedFields = {field.strip() for field in fields.split(',') if field.strip()}
             schemaFields = ActPianteSchema().fields
-            for schemaField in schemaFields:
-                # is a root field (from header table or status/schedule lookup tables)
-                if schemaField in fields:
-                    queryFields.append(schemaField)
-                # is a nested field (from details table or sensors details table or room lookup table)
-                # -schemaField is "dettaglio" or "dettaglioSensori"
-                # -nestedFields contains all the fields specified in the fields attribute which are from the schemaField
-                nestedFields = [field for field in fields if CONST_FIELDS_ATTRIBUTE_FIELDS_MAP.get(field) == schemaField]
-                if nestedFields:
-                    if schemaField not in queryFields:
-                        print("\nschema_field " + schemaField + " not in query_fields\n")
-                        queryFields.append(schemaField)
-                    # inserts into queryFields all the fields that are from the schemaField
-                    queryFields.extend(f"{schemaField}.{field}" for field in nestedFields) " ""
-                " "" NOT NEEDED ANYMORE - for loop has been made inline into nestedFields
-                for field in fields:
-                    print("CURRENT FIELD: " + field)
-                    # get the current field with its model
-                    modelField = CONST_FIELDS_ATTRIBUTE_FIELDS_MAP.get(field)
-                    # if current field is in the schema
-                    if modelField == schemaField:
-                        print("MODEL FIELD EQUALS SCHEMA FIELD: " + modelField)
-                        queryFields.append(schemaField)
-                        queryFields.append(f"{schemaField}.{field}") """
-            
-            
-            """ CODE FROM CLAUDE AI """
-            requested = {f.strip() for f in fields.split(',') if f.strip()}
-            schema_fields = ActPianteSchema().fields
-            # queryFields = []
 
-            for schema_field in schema_fields:
-                print(schema_field)
-                if schema_field in requested:
-                    print("\nschema field in requested: " + schema_field + "\n")
+            for schema_field in schemaFields:
+                if schema_field in requestedFields:
                     queryFields.append(schema_field)
 
-                nested_fields = [f for f in requested if CONST_FIELDS_ATTRIBUTE_FIELDS_MAP.get(f) == schema_field]
+                nested_fields = [f for f in requestedFields if CONST_FIELDS_ATTRIBUTE_FIELDS_MAP.get(f) == schema_field]
                 if nested_fields:
-                    print("\n")
-                    print(nested_fields)
-                    print("\n")
-                    """ if schema_field not in queryFields:
-                        print("\nschema_field " + schema_field + " not in query_fields\n")
-                        queryFields.append(schema_field) """
                     queryFields.extend(f"{schema_field}.{f}" for f in nested_fields)
-                    print(queryFields)
-            
-            print("\nQUERY FIELDS: ")
-            print(queryFields)
-        
-
-        # SHOULD WORK --- CHECK
-        """ print("query fields after for loop")
-        print(queryFields) """
-        # SHOULD WORK --- CHECK
-
 
 
 
@@ -262,11 +115,6 @@ class ActPianteResource(Resource):
                 limit = request.args.get('limit', default=25, type=int)
                 orderBy = request.args.get('orderBy', default='DATA_ULTIMA_MODIFICA:desc', type=str).split(':')
 
-                """ print("orderBy")
-                print(orderBy)
-                print("orderByAttribute_fields_map.get(orderBy[0])")
-                print(orderByAttribute_fields_map.get(orderBy[0])) # ActPianteDettaglioModel.NOME_PIANTA """
-
 
                 if page < 1:
                     return {"message": "La pagina deve essere un valore positivo"}, 400
@@ -274,17 +122,6 @@ class ActPianteResource(Resource):
                     return {"message": "Il limite deve essere compreso o uguale tra 1 e 100"}, 400
                 if not CONST_ALL_ALIASED_FIELDS.get(orderBy[0]):
                     return {"message": "L'attributo di ordinamento contiene un campo non valido"}, 400
-                
-
-                # query construction:
-                """ plants = ActPianteTestataModel.query\
-                            .options(joinedload(ActPianteTestataModel.dettaglio).joinedload(ActPianteDettaglioModel.stanza))\
-                            .options(joinedload(ActPianteTestataModel.dettaglioSensori))\
-                            .options(joinedload(ActPianteTestataModel.status))\
-                            .options(joinedload(ActPianteTestataModel.schedule)) """
-                            # .order_by(orderByAttribute_fields_map.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else orderByAttribute_fields_map.get(orderBy[0]).asc())
-                
-
 
                 
                 
@@ -302,36 +139,6 @@ class ActPianteResource(Resource):
                                 contains_eager(ActPianteTestataModel.schedule, alias=Schedule)
                             )\
                             .order_by(CONST_ALL_ALIASED_FIELDS.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else CONST_ALL_ALIASED_FIELDS.get(orderBy[0]).asc())
-                
-
-                # print("query")
-                # print(plants)
-                
-
-                """ print(orderByAttribute_fields_map.get(orderBy[0]))
-                print(orderByAttribute_fields_map.get(orderBy[0]).__class__) """
-                
-
-                # check if query needs joins for orderBy with substructures' fields
-                """ orderByFieldTableModel = orderByAttribute_fields_map.get(orderBy[0]).table 
-                # ----- orderByFieldTableModel = act_anagrafica_piante_dettaglio -----
-                if orderByFieldTableModel in orderByAttribute_joins_map:
-                    # LookupStanzeModel need the join with detail substructure before the join with the lookup table
-                    if orderByFieldTableModel is LookupStanzeModel.__tablename__:
-                        plants = plants.join(ActPianteTestataModel.dettaglio)
-                    plants = plants.join(orderByAttribute_joins_map[orderByFieldTableModel]) """
-                
-
-                """ print("ORDER BY HA IL CAMPO:")
-                print(orderbyAttribute_orderBy_map.get(orderBy[0])) """
-
-
-                # add the orderBy clause to the query
-                # plants = plants.order_by(CONST_ALL_ALIASED_FIELDS.get(orderBy[0]).desc() if orderBy[1].lower() == 'desc' else CONST_ALL_ALIASED_FIELDS.get(orderBy[0]).asc())
-
-
-                """ print("complete query")
-                print(plants) """
                 
 
                 pagination = plants.paginate(page=page, per_page=limit, error_out=False)
@@ -471,16 +278,11 @@ class ActPianteResource(Resource):
             return {"message": "Pianta non trovata"}, 404
         
 
-        print("LA PIANTA E' STATA TROVATA")
-        
-
         # get JSON payload with all fields to be updated except for the photo
         jsonRequestPayload=None
         try:
             requestPayload = request.form.get('payload')
-            print(requestPayload)
             if requestPayload is not None:
-                print("REQUEST PAYLOAD NON E' VUOTO")
                 jsonRequestPayload = json.loads(requestPayload)
         except Exception:
             return {"message": "Errore durante il recupero dei dati da salvare"}, 400
@@ -489,11 +291,9 @@ class ActPianteResource(Resource):
         # get the photo's bytes from the file attachment in the multipart form-data request
         photoBytes = None
         photoFile = request.files.get('image')
-        print(photoFile) # check if photo file is correctly retrieved
         if photoFile:
             try:
                 photoBytes = photoFile.read()
-                print("IL FILE DELLA PIANTA E' STATO LETTO CORRETTAMENTE")
             except Exception:
                 return {"message": "Errore durante il recupero della foto da salvare"}, 400
 
@@ -507,25 +307,19 @@ class ActPianteResource(Resource):
             sensorsDetailsJsonPayload = {}
             
             for key, value in jsonRequestPayload.items():
-                print("Key = " + key)
                 if key in headerFields:
                     headerJsonPayload[key] = value
-                    print("Header field: " + key)
                 elif key in detailsFields:
                     detailsJsonPayload[key] = value
-                    print("Details field: " + key)
                 elif key in sensorsDetailsFields:
                     sensorsDetailsJsonPayload[key] = value
-                    print("Sensors details feild: " + key)
             
 
             # marshmallow format payload, separating header, details and sensors details
             marshmallowPayload = dict(headerJsonPayload)
             if detailsJsonPayload:
-                print("Details payload is not none")
                 marshmallowPayload['dettaglio'] = detailsJsonPayload
             if sensorsDetailsJsonPayload:
-                print("Sensors details payload is not none")
                 marshmallowPayload['dettaglioSensori'] = sensorsDetailsJsonPayload
             
 
@@ -544,7 +338,6 @@ class ActPianteResource(Resource):
         #   value contains the corresponding value or the json payload with all the fields of the current table
         if validFields:
             for key, value in validFields.items():
-                print("Key: " + key)
                 # if current table is the header table, key will be the specific field
                 #   details and sensorsDetails are dictionaries, while the header only contains strings
                 #   isinstance returnes True if the value is a dictionary, False otherwise
@@ -558,7 +351,15 @@ class ActPianteResource(Resource):
                     if key == 'dettaglioSensori' and plantRelationship is None:
                         try:
                             # initialize the relationship between header plant and sensors details
-                            plantRelationship = ActPianteDettaglioSensoriModel()
+                            # --all fields need to be specified, but if any key isn't updated through the payload, it will be set to None
+                            plantRelationship = ActPianteDettaglioSensoriModel(
+                                UMIDITA_CORRENTE=validFields['dettaglioSensori']['UMIDITA_CORRENTE'] if 'UMIDITA_CORRENTE' in validFields['dettaglioSensori'].keys() else None,
+                                ACQUA_ULTIMA_INNAFFIATURA=validFields['dettaglioSensori']['ACQUA_ULTIMA_INNAFFIATURA'] if 'ACQUA_ULTIMA_INNAFFIATURA' in validFields['dettaglioSensori'].keys() else None,
+                                ALTRO_DATO_SENSORI_1=validFields['dettaglioSensori']['ALTRO_DATO_SENSORI_1'] if 'ALTRO_DATO_SENSORI_1' in validFields['dettaglioSensori'].keys() else None,
+                                ALTRO_DATO_SENSORI_2=validFields['dettaglioSensori']['ALTRO_DATO_SENSORI_2'] if 'ALTRO_DATO_SENSORI_2' in validFields['dettaglioSensori'].keys() else None,
+                                ALTRO_DATO_SENSORI_3=validFields['dettaglioSensori']['ALTRO_DATO_SENSORI_3'] if 'ALTRO_DATO_SENSORI_3' in validFields['dettaglioSensori'].keys() else None,
+                                ALTRO_DATO_SENSORI_4=validFields['dettaglioSensori']['ALTRO_DATO_SENSORI_4'] if 'ALTRO_DATO_SENSORI_4' in validFields['dettaglioSensori'].keys() else None
+                            )
                             plant.dettaglioSensori = plantRelationship
                             db.session.add(plantRelationship)
                         except SQLAlchemyError:
