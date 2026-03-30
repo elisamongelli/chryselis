@@ -195,6 +195,13 @@ class ActPianteResource(Resource):
             jsonRequestPayload = json.loads(requestPayload)
         except Exception:
             return {"message": "Errore durante il recupero dei dati da salvare"}, 400
+        
+
+        # check if room ID is specified if at least one position is populated
+        if ((jsonRequestPayload.get('POSIZIONE_STANZA_X') is not None or jsonRequestPayload.get('POSIZIONE_STANZA_Y') is not None)
+                and jsonRequestPayload.get('ID_STANZA') is None):
+            return {"message": "E' necessario specificare una stanza per impostare la posizione della pianta."}, 400
+        
 
 
         # get the photo's bytes from the file attachment in the multipart form-data request
@@ -286,6 +293,12 @@ class ActPianteResource(Resource):
                 jsonRequestPayload = json.loads(requestPayload)
         except Exception:
             return {"message": "Errore durante il recupero dei dati da salvare"}, 400
+        
+
+        # check if room ID is specified if at least one position is populated
+        if ((jsonRequestPayload.get('POSIZIONE_STANZA_X') is not None or jsonRequestPayload.get('POSIZIONE_STANZA_Y') is not None)
+                and jsonRequestPayload.get('ID_STANZA') is None):
+            return {"message": "E' necessario specificare una stanza per impostare la posizione della pianta."}, 400
 
 
         # get the photo's bytes from the file attachment in the multipart form-data request
