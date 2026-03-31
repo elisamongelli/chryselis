@@ -203,6 +203,12 @@ class ActPianteResource(Resource):
             return {"message": "E' necessario specificare una stanza per impostare la posizione della pianta."}, 400
         
 
+        # check if both positions are set if at least one is specified
+        if ((jsonRequestPayload.get('POSIZIONE_STANZA_X') is not None and jsonRequestPayload.get('POSIZIONE_STANZA_Y') is None)
+                or (jsonRequestPayload.get('POSIZIONE_STANZA_X') is None and jsonRequestPayload.get('POSIZIONE_STANZA_Y') is not None)):
+            return {"message": "E' necessario specificare entrambe le coordinate nella stanza."}, 400
+        
+
 
         # get the photo's bytes from the file attachment in the multipart form-data request
         photoBytes = None
