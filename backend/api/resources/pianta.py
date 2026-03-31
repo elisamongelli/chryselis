@@ -207,7 +207,22 @@ class ActPianteResource(Resource):
         if ((jsonRequestPayload.get('POSIZIONE_STANZA_X') is not None and jsonRequestPayload.get('POSIZIONE_STANZA_Y') is None)
                 or (jsonRequestPayload.get('POSIZIONE_STANZA_X') is None and jsonRequestPayload.get('POSIZIONE_STANZA_Y') is not None)):
             return {"message": "E' necessario specificare entrambe le coordinate nella stanza."}, 400
+
+
         
+        # get room info to check if specified coordinates are within room's dimensions
+        if jsonRequestPayload.get('ID_STANZA') is not None:
+            
+            room = LookupStanzeModel.query.get(jsonRequestPayload.get('ID_STANZA'))
+
+            if not room:
+                return {"message": "La stanza specificata non esiste."}, 400
+            
+            if jsonRequestPayload.get('POSIZIONE_STANZA_X') < 0 or jsonRequestPayload.get('POSIZIONE_STANZA_X') > room.DIMENSIONE_GRIGLIA_X:
+                return {"message": "La coordinata X indicata non è valida per la stanza specificata."}, 400
+            elif jsonRequestPayload.get('POSIZIONE_STANZA_Y') < 0 or jsonRequestPayload.get('POSIZIONE_STANZA_Y') > room.DIMENSIONE_GRIGLIA_Y:
+                return {"message": "La coordinata Y indicata non è valida per la stanza specificata."}, 400
+
 
 
         # get the photo's bytes from the file attachment in the multipart form-data request
