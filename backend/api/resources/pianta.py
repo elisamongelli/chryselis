@@ -222,6 +222,26 @@ class ActPianteResource(Resource):
                 return {"message": "La coordinata X indicata non è valida per la stanza specificata."}, 400
             elif jsonRequestPayload.get('POSIZIONE_STANZA_Y') < 0 or jsonRequestPayload.get('POSIZIONE_STANZA_Y') > room.DIMENSIONE_GRIGLIA_Y:
                 return {"message": "La coordinata Y indicata non è valida per la stanza specificata."}, 400
+        
+
+
+        # get plants to check if specified coordinates are free
+        if jsonRequestPayload.get('ID_STANZA') is not None:
+            
+            plant = ActPianteTestataModel.query\
+                        .options(joinedload(ActPianteTestataModel.dettaglio).joinedload(ActPianteDettaglioModel.stanza))\
+                        .filter((ActPianteDettaglioModel.POSIZIONE_STANZA_X == jsonRequestPayload.get('POSIZIONE_STANZA_X')) 
+                                | (ActPianteDettaglioModel.POSIZIONE_STANZA_Y == jsonRequestPayload.get('POSIZIONE_STANZA_Y')))
+                        # """ .first() """
+                        # """ .options(joinedload(ActPianteTestataModel.dettaglioSensori))\
+                        # .options(joinedload(ActPianteTestataModel.status))\
+                        # .options(joinedload(ActPianteTestataModel.schedule))\ """
+            
+            print(plant)
+            if plant:
+                schema = ActPianteSchema(only=None)
+            print(schema)
+            return
 
 
 
