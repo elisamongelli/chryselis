@@ -158,7 +158,7 @@ class ActPianteResource(Resource):
                     "totalItems": totalItems
                 }, 200
             except SQLAlchemyError as e:
-                return {"message": "Errore durante il recupero delle piante" + str(e)}, 500
+                return {"message": "Errore durante il recupero delle piante"}, 500
 
 
 
@@ -176,7 +176,7 @@ class ActPianteResource(Resource):
         except SQLAlchemyError:
             return {"message": "Errore durante il recupero della pianta"}, 500
 
-        # if the plant has been retrieve successfully from the DB
+        # if the plant has been successfully retrieved from the DB
         if plant:
             schema = ActPianteSchema(only=queryFields if queryFields else None)
             return schema.dump(plant), 200
@@ -227,21 +227,38 @@ class ActPianteResource(Resource):
 
         # get plants to check if specified coordinates are free
         if jsonRequestPayload.get('ID_STANZA') is not None:
-            
-            plant = ActPianteTestataModel.query\
-                        .options(joinedload(ActPianteTestataModel.dettaglio).joinedload(ActPianteDettaglioModel.stanza))\
-                        .filter((ActPianteDettaglioModel.POSIZIONE_STANZA_X == jsonRequestPayload.get('POSIZIONE_STANZA_X')) 
-                                | (ActPianteDettaglioModel.POSIZIONE_STANZA_Y == jsonRequestPayload.get('POSIZIONE_STANZA_Y')))
-                        # """ .first() """
-                        # """ .options(joinedload(ActPianteTestataModel.dettaglioSensori))\
-                        # .options(joinedload(ActPianteTestataModel.status))\
-                        # .options(joinedload(ActPianteTestataModel.schedule))\ """
-            
-            print(plant)
-            if plant:
-                schema = ActPianteSchema(only=None)
-            print(schema)
-            return
+
+            try:
+                # define aliases for related tables in order to make joins
+                Details = aliased(ActPianteDettaglioModel)
+                SensorsDetails = aliased(ActPianteDettaglioSensoriModel)
+                Room = aliased(LookupStanzeModel)
+                Status = aliased(LookupStatiModel)
+                Schedule = aliased(LookupProgrammiModel)
+
+                plantsWithSpecifiedPosition = ActPianteTestataModel.query\
+                                                .join(Details, ActPianteTestataModel.dettaglio, isouter=True)\
+                                                .join(Room, Details.stanza, isouter=True)\
+                                                .join(SensorsDetails, ActPianteTestataModel.dettaglioSensori, isouter=True)\
+                                                .join(Status, ActPianteTestataModel.status, isouter=True)\
+                                                .join(Schedule, ActPianteTestataModel.schedule, isouter=True)\
+                                                .options(
+                                                    contains_eager(ActPianteTestataModel.dettaglio, alias=Details),
+                                                    contains_eager(ActPianteTestataModel.dettaglio, ActPianteDettaglioModel.stanza, alias=Room),
+                                                    contains_eager(ActPianteTestataModel.dettaglioSensori, alias=SensorsDetails),
+                                                    contains_eager(ActPianteTestataModel.status, alias=Status),
+                                                    contains_eager(ActPianteTestataModel.schedule, alias=Schedule)
+                                                )\
+                                                .filter(Details.ID_STANZA == jsonRequestPayload.get('ID_STANZA'),
+                                                        Details.POSIZIONE_STANZA_X == jsonRequestPayload.get('POSIZIONE_STANZA_X'),
+                                                        Details.POSIZIONE_STANZA_Y == jsonRequestPayload.get('POSIZIONE_STANZA_Y'))\
+                                                .first()
+            except SQLAlchemyError:
+                return {"message": "Errore durante i controlli preliminari"}, 500
+
+            # if the plant with specified positions has been successfully retrieved from the DB
+            if plantsWithSpecifiedPosition is not None:
+                return {"message": "La posizione indicata per la pianta è già occupata."}, 400
 
 
 
