@@ -423,6 +423,13 @@ class ActPianteResource(Resource):
             # if the plant with specified positions has been successfully retrieved from the DB
             if plantsWithSpecifiedPosition is not None:
                 return {"message": "La posizione indicata per la pianta è già occupata."}, 400
+        
+
+
+        # check if umidity value is between 0 and 100
+        if jsonRequestPayload.get('UMIDITA_CORRENTE') is not None:
+            if jsonRequestPayload.get('UMIDITA_CORRENTE') < 0 or jsonRequestPayload.get('UMIDITA_CORRENTE') > 100:
+                return {"message": "Il valore misurato dell'umidità corrente non è valido."}, 400
             
 
 
