@@ -218,15 +218,19 @@ class ActPianteResource(Resource):
             if not room:
                 return {"message": "La stanza specificata non esiste."}, 400
             
-            if jsonRequestPayload.get('POSIZIONE_STANZA_X') < 0 or jsonRequestPayload.get('POSIZIONE_STANZA_X') > room.DIMENSIONE_GRIGLIA_X:
-                return {"message": "La coordinata X indicata non è valida per la stanza specificata."}, 400
-            elif jsonRequestPayload.get('POSIZIONE_STANZA_Y') < 0 or jsonRequestPayload.get('POSIZIONE_STANZA_Y') > room.DIMENSIONE_GRIGLIA_Y:
-                return {"message": "La coordinata Y indicata non è valida per la stanza specificata."}, 400
+            if (jsonRequestPayload.get('POSIZIONE_STANZA_X') is not None and jsonRequestPayload.get('POSIZIONE_STANZA_Y') is not None):
+                # plant coordinates are specified
+                if jsonRequestPayload.get('POSIZIONE_STANZA_X') < 0 or jsonRequestPayload.get('POSIZIONE_STANZA_X') > room.DIMENSIONE_GRIGLIA_X:
+                    return {"message": "La coordinata X indicata non è valida per la stanza specificata."}, 400
+                elif jsonRequestPayload.get('POSIZIONE_STANZA_Y') < 0 or jsonRequestPayload.get('POSIZIONE_STANZA_Y') > room.DIMENSIONE_GRIGLIA_Y:
+                    return {"message": "La coordinata Y indicata non è valida per la stanza specificata."}, 400
         
 
 
         # get plants to check if specified coordinates are free
-        if jsonRequestPayload.get('ID_STANZA') is not None:
+        if jsonRequestPayload.get('ID_STANZA') is not None\
+            and jsonRequestPayload.get('POSIZIONE_STANZA_X') is not None\
+            and jsonRequestPayload.get('POSIZIONE_STANZA_Y') is not None:
 
             try:
                 # define aliases for related tables in order to make joins
@@ -357,6 +361,69 @@ class ActPianteResource(Resource):
         if ((jsonRequestPayload.get('POSIZIONE_STANZA_X') is not None or jsonRequestPayload.get('POSIZIONE_STANZA_Y') is not None)
                 and jsonRequestPayload.get('ID_STANZA') is None):
             return {"message": "E' necessario specificare una stanza per impostare la posizione della pianta."}, 400
+        
+
+        # check if both positions are set if at least one is specified
+        if ((jsonRequestPayload.get('POSIZIONE_STANZA_X') is not None and jsonRequestPayload.get('POSIZIONE_STANZA_Y') is None)
+                or (jsonRequestPayload.get('POSIZIONE_STANZA_X') is None and jsonRequestPayload.get('POSIZIONE_STANZA_Y') is not None)):
+            return {"message": "E' necessario specificare entrambe le coordinate nella stanza."}, 400
+
+
+        
+        # get room info to check if specified coordinates are within room's dimensions
+        if jsonRequestPayload.get('ID_STANZA') is not None:
+            
+            room = LookupStanzeModel.query.get(jsonRequestPayload.get('ID_STANZA'))
+
+            if not room:
+                return {"message": "La stanza specificata non esiste."}, 400
+            
+            if (jsonRequestPayload.get('POSIZIONE_STANZA_X') is not None and jsonRequestPayload.get('POSIZIONE_STANZA_Y') is not None):
+                # plant coordinates are specified
+                if jsonRequestPayload.get('POSIZIONE_STANZA_X') < 0 or jsonRequestPayload.get('POSIZIONE_STANZA_X') > room.DIMENSIONE_GRIGLIA_X:
+                    return {"message": "La coordinata X indicata non è valida per la stanza specificata."}, 400
+                elif jsonRequestPayload.get('POSIZIONE_STANZA_Y') < 0 or jsonRequestPayload.get('POSIZIONE_STANZA_Y') > room.DIMENSIONE_GRIGLIA_Y:
+                    return {"message": "La coordinata Y indicata non è valida per la stanza specificata."}, 400
+        
+
+
+        # get plants to check if specified coordinates are free
+        if jsonRequestPayload.get('ID_STANZA') is not None\
+            and jsonRequestPayload.get('POSIZIONE_STANZA_X') is not None\
+            and jsonRequestPayload.get('POSIZIONE_STANZA_Y') is not None:
+
+            try:
+                # define aliases for related tables in order to make joins
+                Details = aliased(ActPianteDettaglioModel)
+                SensorsDetails = aliased(ActPianteDettaglioSensoriModel)
+                Room = aliased(LookupStanzeModel)
+                Status = aliased(LookupStatiModel)
+                Schedule = aliased(LookupProgrammiModel)
+
+                plantsWithSpecifiedPosition = ActPianteTestataModel.query\
+                                                .join(Details, ActPianteTestataModel.dettaglio, isouter=True)\
+                                                .join(Room, Details.stanza, isouter=True)\
+                                                .join(SensorsDetails, ActPianteTestataModel.dettaglioSensori, isouter=True)\
+                                                .join(Status, ActPianteTestataModel.status, isouter=True)\
+                                                .join(Schedule, ActPianteTestataModel.schedule, isouter=True)\
+                                                .options(
+                                                    contains_eager(ActPianteTestataModel.dettaglio, alias=Details),
+                                                    contains_eager(ActPianteTestataModel.dettaglio, ActPianteDettaglioModel.stanza, alias=Room),
+                                                    contains_eager(ActPianteTestataModel.dettaglioSensori, alias=SensorsDetails),
+                                                    contains_eager(ActPianteTestataModel.status, alias=Status),
+                                                    contains_eager(ActPianteTestataModel.schedule, alias=Schedule)
+                                                )\
+                                                .filter(Details.ID_STANZA == jsonRequestPayload.get('ID_STANZA'),
+                                                        Details.POSIZIONE_STANZA_X == jsonRequestPayload.get('POSIZIONE_STANZA_X'),
+                                                        Details.POSIZIONE_STANZA_Y == jsonRequestPayload.get('POSIZIONE_STANZA_Y'))\
+                                                .first()
+            except SQLAlchemyError:
+                return {"message": "Errore durante i controlli preliminari"}, 500
+
+            # if the plant with specified positions has been successfully retrieved from the DB
+            if plantsWithSpecifiedPosition is not None:
+                return {"message": "La posizione indicata per la pianta è già occupata."}, 400
+            
 
 
         # get the photo's bytes from the file attachment in the multipart form-data request
