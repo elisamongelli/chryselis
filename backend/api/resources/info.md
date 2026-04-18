@@ -1,0 +1,7 @@
+/api/resources contains one file for each entity
+-stanza.py: REST endpoint definition for each method, using models and schemas, and response definition for rooms
+-stato.py: REST endpoint definition for each method, using models and schemas, and response definition for statuses
+-programma.py: REST endpoint definition for each method, using models and schemas, and response definition for schedules
+-pianta_programma.py: REST endpoint definition for each method, using models and schemas, and response definition for plant-schedule associations
+-pianta.py: REST endpoint definition for each method, using models and schemas, and response definition for plants
+-pianta_storico.py: REST endpoint definition for each method, using models and schemas, and response definition for plants history
