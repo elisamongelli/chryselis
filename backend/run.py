@@ -12,6 +12,15 @@ app = create_app("config")
 def index():
     return app.send_static_file('index.html')
 
+@app.route('/plants-list')
+def plantsList():
+    return app.send_static_file('plants-list.html')
+
+@app.route('/plant-details')
+def plantDetails():
+    return app.send_static_file('plant-details.html')
+
+
 
 # run the application
 if __name__ == "__main__":
