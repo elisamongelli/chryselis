@@ -10,15 +10,15 @@ app = create_app("config")
 # route frontend
 @app.route('/')
 def index():
-    return app.send_static_file('index.html')
+    return app.send_static_file('html/index.html')
 
 @app.route('/plants-list')
 def plantsList():
-    return app.send_static_file('plants-list.html')
+    return app.send_static_file('html/plants-list.html')
 
 @app.route('/plant-details')
 def plantDetails():
-    return app.send_static_file('plant-details.html')
+    return app.send_static_file('html/plant-details.html')
 
 
 
